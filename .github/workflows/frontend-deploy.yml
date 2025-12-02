@@ -33,8 +33,8 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
-          # you can move this into repo/Actions secrets later if you want
-          VITE_API_BASE: https://autotrac-35sx.onrender.com
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+
         run: npm run build
 
       - name: Deploy to gh-pages
