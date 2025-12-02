@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_BASE = "http://172.22.48.1:8000"; // keep or change later
+const API_BASE = "https://autotrac-35sx.onrender.com"; // keep or change later
 
 interface Project {
   id: number;
