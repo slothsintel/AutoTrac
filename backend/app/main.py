@@ -260,3 +260,12 @@ def export_incomes_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+@app.get("/", include_in_schema=False)
+def root():
+    return {
+        "service": "AutoTrac backend",
+        "status": "ok",
+        "docs": "/docs",
+        "time": datetime.utcnow().isoformat()
+    }
