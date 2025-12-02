@@ -2,11 +2,11 @@ name: Deploy frontend to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
       - 'frontend/**'
-      - '.github/workflows/frontend-deploy.yml'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -19,12 +19,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
           cache: 'npm'
-          cache-dependency-path: 'frontend/package-lock.json'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         working-directory: frontend
@@ -32,12 +32,15 @@ jobs:
 
       - name: Build frontend
         working-directory: frontend
+        env:
+          # you can move this into repo/Actions secrets later if you want
+          VITE_API_BASE: https://autotrac-35sx.onrender.com
         run: npm run build
 
-      - name: Deploy to GitHub Pages (gh-pages branch)
+      - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend/dist
           publish_branch: gh-pages
-          force_orphan: true
+          cname: autotrac.slothsintel.com
