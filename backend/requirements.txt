@@ -107,7 +107,7 @@ torch==2.9.0
 torchaudio==2.9.0
 torchvision==0.24.1
 tqdm==4.67.1
-triton==2.0.0
+triton==3.5.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uritemplate==4.2.0
