@@ -105,7 +105,7 @@ tensorboard-data-server==0.7.2
 tifffile==2025.10.16
 torch==2.9.0
 torchaudio==2.9.0
-torchvision==0.15.2
+torchvision==0.24.1
 tqdm==4.67.1
 triton==2.0.0
 typing-inspection==0.4.2
