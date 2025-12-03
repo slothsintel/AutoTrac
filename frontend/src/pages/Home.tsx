@@ -20,10 +20,11 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
 
+      {/* PROJECTS */}
       <FeedCard title="Projects" subtitle={`${projects.length} total`}>
         <ul className="list-disc ml-5">
           {projects.map(p => (
-            <li
+            <li 
               key={p.id}
               className="text-neutral-900 dark:text-neutral-100"
             >
@@ -33,14 +34,18 @@ export default function Home() {
         </ul>
       </FeedCard>
 
+      {/* TIME ENTRIES */}
       <FeedCard title="Recent time entries">
         <ul className="space-y-2">
           {latest.map(e => (
             <li key={e.id} className="flex justify-between">
+
+              {/* LEFT SIDE */}
               <span className="text-neutral-900 dark:text-neutral-100">
                 #{e.id} · {new Date(e.start_time).toLocaleString()}
               </span>
 
+              {/* RIGHT SIDE */}
               <span className="text-xs text-neutral-600 dark:text-neutral-400">
                 {e.end_time ? "stopped" : "running"}
               </span>
@@ -49,13 +54,18 @@ export default function Home() {
         </ul>
       </FeedCard>
 
+      {/* INCOMES */}
       <FeedCard title="Recent incomes">
         <ul className="space-y-2">
           {incomes.map(i => (
             <li key={i.id} className="flex justify-between">
+              
+              {/* LEFT SIDE */}
               <span className="text-neutral-900 dark:text-neutral-100">
                 #{i.id} · {new Date(i.date).toLocaleDateString()}
               </span>
+
+              {/* RIGHT SIDE */}
               <span className="font-medium text-neutral-900 dark:text-neutral-100">
                 £{i.amount.toFixed(2)}
               </span>
