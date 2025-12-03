@@ -28,11 +28,13 @@ const MoneyIcon = (
   </svg>
 );
 
+const FIXED_PROJECTS = ["AutoVisuals", "AutoTrac", "AutoStock"];
+
 export default function Incomes() {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [currency, setCurrency] = useState("GBP");
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectId, setProjectId] = useState<number | "">("");
+  const [projectName, setProjectName] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [source, setSource] = useState("");
 
@@ -42,10 +44,13 @@ export default function Incomes() {
   }, []);
 
   const addIncome = async () => {
-    if (!projectId || !amount) return;
+    if (!projectName || !amount) return;
+
+    const project = projects.find((p) => p.name === projectName);
+    if (!project) return;
 
     const res = await api.post("/incomes/", {
-      project_id: projectId,
+      project_id: project.id,
       amount: Number(amount),
       currency,
       date: new Date().toISOString().slice(0, 10),
@@ -55,7 +60,7 @@ export default function Incomes() {
     setIncomes([res.data, ...incomes]);
     setAmount("");
     setSource("");
-    setProjectId("");
+    setProjectName("");
   };
 
   const formatAmount = (cur: string | undefined, n: number) => {
@@ -86,13 +91,13 @@ export default function Incomes() {
       <div className="space-y-3 mb-6">
         <select
           className="w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border rounded-xl p-2"
-          value={projectId}
-          onChange={(e) => setProjectId(Number(e.target.value))}
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
         >
           <option value="">Choose project…</option>
-          {projects.map((p) => (
-            <option value={p.id} key={p.id}>
-              {p.name}
+          {FIXED_PROJECTS.map((name) => (
+            <option key={name} value={name}>
+              {name}
             </option>
           ))}
         </select>

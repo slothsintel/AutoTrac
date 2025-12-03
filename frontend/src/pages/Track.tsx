@@ -27,10 +27,12 @@ const TimerIcon = (
   </svg>
 );
 
+const FIXED_PROJECTS = ["AutoVisuals", "AutoTrac", "AutoStock"];
+
 export default function Track() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [active, setActive] = useState<TimeEntry | null>(null);
-  const [selected, setSelected] = useState<number | undefined>(undefined);
+  const [selectedName, setSelectedName] = useState<string>("");
   const [note, setNote] = useState("");
 
   useEffect(() => {
@@ -45,9 +47,13 @@ export default function Track() {
   const btnLabel = isRunning ? "Stop" : "Start";
 
   const start = async () => {
-    if (!selected) return;
+    if (!selectedName) return;
+
+    const project = projects.find((p) => p.name === selectedName);
+    if (!project) return; // backend doesn't have this project yet
+
     const res = await api.post("/time-entries/", {
-      project_id: selected,
+      project_id: project.id,
       start_time: new Date().toISOString(),
       note,
     });
@@ -75,8 +81,8 @@ export default function Track() {
       </label>
 
       <select
-        value={selected ?? ""}
-        onChange={(e) => setSelected(Number(e.target.value))}
+        value={selectedName}
+        onChange={(e) => setSelectedName(e.target.value)}
         disabled={isRunning}
         className="w-full border border-neutral-200 dark:border-neutral-700 
                    rounded-xl p-2 mb-3 bg-white dark:bg-neutral-800 
@@ -85,9 +91,9 @@ export default function Track() {
         <option value="" disabled>
           Select project…
         </option>
-        {projects.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
+        {FIXED_PROJECTS.map((name) => (
+          <option key={name} value={name}>
+            {name}
           </option>
         ))}
       </select>

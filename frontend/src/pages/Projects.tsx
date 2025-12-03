@@ -18,19 +18,31 @@ const FolderIcon = (
   </svg>
 );
 
+const FIXED_PROJECTS = ["AutoVisuals", "AutoTrac", "AutoStock"];
+
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [name, setName] = useState("");
+  const [selectedName, setSelectedName] = useState("");
 
   useEffect(() => {
     api.get("/projects/").then((r) => setProjects(r.data));
   }, []);
 
+  const existingNames = projects.map((p) => p.name);
+  const availableChoices = FIXED_PROJECTS.filter(
+    (name) => !existingNames.includes(name)
+  );
+
   const add = async () => {
-    if (!name.trim()) return;
-    const res = await api.post("/projects/", { name });
+    if (!selectedName) return;
+    if (existingNames.includes(selectedName)) {
+      setSelectedName("");
+      return;
+    }
+
+    const res = await api.post("/projects/", { name: selectedName });
     setProjects([res.data, ...projects]);
-    setName("");
+    setSelectedName("");
   };
 
   return (
@@ -43,16 +55,28 @@ export default function Projects() {
       </div>
 
       <div className="flex gap-2 mb-4">
-        <input
+        <select
           className="flex-1 border border-neutral-200 dark:border-neutral-700 rounded-xl p-2 
                      bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-          placeholder="New project"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+          value={selectedName}
+          onChange={(e) => setSelectedName(e.target.value)}
+        >
+          <option value="">
+            {availableChoices.length
+              ? "Choose project to add…"
+              : "All default projects added"}
+          </option>
+          {availableChoices.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+
         <button
           onClick={add}
-          className="px-4 rounded-xl bg-blue-600 text-white"
+          disabled={!selectedName}
+          className="px-4 rounded-xl bg-blue-600 text-white disabled:bg-neutral-400 disabled:cursor-not-allowed"
         >
           Add
         </button>
