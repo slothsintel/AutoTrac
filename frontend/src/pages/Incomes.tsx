@@ -6,6 +6,7 @@ type Income = {
   project_id: number;
   date: string;
   amount: number;
+  currency?: string;
   source?: string;
 };
 
@@ -13,6 +14,7 @@ type Project = { id:number; name:string };
 
 export default function Incomes() {
   const [incomes, setIncomes] = useState<Income[]>([]);
+  const [currency, setCurrency] = useState("GBP");
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<number | "">("");
   const [amount, setAmount] = useState("");
@@ -29,14 +31,16 @@ export default function Incomes() {
     const res = await api.post("/incomes/", {
       project_id: projectId,
       amount: Number(amount),
+      currency,                 // NOW supports GBP, USD, HKD, EUR, RMB
       date: new Date().toISOString().slice(0, 10),
-      source
+      source,
     });
 
     setIncomes([res.data, ...incomes]);
     setAmount("");
     setSource("");
     setProjectId("");
+    setCurrency("GBP");
   };
 
   return (
@@ -55,9 +59,22 @@ export default function Incomes() {
           ))}
         </select>
 
+        {/* NEW: Added EUR + RMB */}
+        <select
+          className="w-full bg-white dark:bg-neutral-800 border rounded-xl p-2"
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+        >
+          <option value="GBP">GBP (£)</option>
+          <option value="USD">USD ($)</option>
+          <option value="HKD">HKD (HK$)</option>
+          <option value="EUR">EUR (€)</option>
+          <option value="RMB">RMB (¥)</option>
+        </select>
+
         <input
           type="number"
-          placeholder="Amount (£)"
+          placeholder="Amount"
           value={amount}
           className="w-full bg-white dark:bg-neutral-800 border rounded-xl p-2"
           onChange={e => setAmount(e.target.value)}
@@ -86,10 +103,23 @@ export default function Incomes() {
             className="bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-xl p-3 flex justify-between"
           >
             <div>
-              <div className="font-medium">£{i.amount.toFixed(2)}</div>
+              <div className="font-medium">
+                {/* NEW CURRENCY DISPLAY LOGIC */}
+                {i.currency === "USD" && `$${i.amount.toFixed(2)}`}
+                {i.currency === "HKD" && `HK$${i.amount.toFixed(2)}`}
+                {i.currency === "EUR" && `€${i.amount.toFixed(2)}`}
+                {i.currency === "RMB" && `¥${i.amount.toFixed(2)}`}
+                {(!i.currency || i.currency === "GBP") && `£${i.amount.toFixed(2)}`}
+              </div>
+
               <div className="text-xs text-neutral-500">{i.date}</div>
             </div>
-            <div className="text-xs">{i.source}</div>
+
+            {i.source && (
+              <div className="text-xs text-neutral-600 dark:text-neutral-300">
+                {i.source}
+              </div>
+            )}
           </li>
         ))}
       </ul>

@@ -18,10 +18,18 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-md px-3 py-3">
+    <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
+
       <FeedCard title="Projects" subtitle={`${projects.length} total`}>
         <ul className="list-disc ml-5">
-          {projects.map(p => <li key={p.id}>{p.name}</li>)}
+          {projects.map(p => (
+            <li
+              key={p.id}
+              className="text-neutral-900 dark:text-neutral-100"
+            >
+              {p.name}
+            </li>
+          ))}
         </ul>
       </FeedCard>
 
@@ -29,8 +37,13 @@ export default function Home() {
         <ul className="space-y-2">
           {latest.map(e => (
             <li key={e.id} className="flex justify-between">
-              <span>#{e.id} · {new Date(e.start_time).toLocaleString()}</span>
-              <span className="text-xs text-neutral-500">{e.end_time ? "stopped" : "running"}</span>
+              <span className="text-neutral-900 dark:text-neutral-100">
+                #{e.id} · {new Date(e.start_time).toLocaleString()}
+              </span>
+
+              <span className="text-xs text-neutral-600 dark:text-neutral-400">
+                {e.end_time ? "stopped" : "running"}
+              </span>
             </li>
           ))}
         </ul>
@@ -40,12 +53,17 @@ export default function Home() {
         <ul className="space-y-2">
           {incomes.map(i => (
             <li key={i.id} className="flex justify-between">
-              <span>#{i.id} · {new Date(i.date).toLocaleDateString()}</span>
-              <span className="font-medium">£{i.amount.toFixed(2)}</span>
+              <span className="text-neutral-900 dark:text-neutral-100">
+                #{i.id} · {new Date(i.date).toLocaleDateString()}
+              </span>
+              <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                £{i.amount.toFixed(2)}
+              </span>
             </li>
           ))}
         </ul>
       </FeedCard>
+
     </div>
   );
 }

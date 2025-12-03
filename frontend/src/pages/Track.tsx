@@ -6,11 +6,10 @@ type TimeEntry = { id:number; project_id:number; start_time:string; end_time:str
 
 export default function Track() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [active, setActive]   = useState<TimeEntry|null>(null);
+  const [active, setActive] = useState<TimeEntry|null>(null);
   const [selected, setSelected] = useState<number|undefined>(undefined);
   const [note, setNote] = useState("");
 
-  // load projects and latest entries
   useEffect(() => {
     api.get("/projects/").then(r => setProjects(r.data));
     api.get("/time-entries/").then(r => {
@@ -20,12 +19,14 @@ export default function Track() {
   }, []);
 
   const isRunning = !!active;
-  const btnLabel  = isRunning ? "Stop" : "Start";
+  const btnLabel = isRunning ? "Stop" : "Start";
 
   const start = async () => {
     if (!selected) return;
     const res = await api.post("/time-entries/", {
-      project_id: selected, start_time: new Date().toISOString(), note
+      project_id: selected,
+      start_time: new Date().toISOString(),
+      note
     });
     setActive(res.data);
     setNote("");
@@ -38,18 +39,25 @@ export default function Track() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-3 py-4">
-      <h1 className="text-lg font-semibold mb-3">Time tracker</h1>
+    <div className="mx-auto max-w-md px-3 py-4 text-neutral-900 dark:text-neutral-100">
+      <h1 className="text-lg font-semibold mb-3 text-neutral-900 dark:text-neutral-100">
+        Time tracker
+      </h1>
 
-      <label className="block text-sm mb-1">Project</label>
+      <label className="block text-sm mb-1 text-neutral-600 dark:text-neutral-400">
+        Project
+      </label>
+
       <select
         value={selected ?? ""}
         onChange={e => setSelected(Number(e.target.value))}
         disabled={isRunning}
-        className="w-full border rounded-xl p-2 mb-3 bg-white"
+        className="w-full border border-neutral-200 dark:border-neutral-700 rounded-xl p-2 mb-3 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
       >
         <option value="" disabled>Select project…</option>
-        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+        {projects.map(p => (
+          <option key={p.id} value={p.id}>{p.name}</option>
+        ))}
       </select>
 
       <textarea
@@ -57,7 +65,7 @@ export default function Track() {
         value={note}
         onChange={e => setNote(e.target.value)}
         disabled={isRunning}
-        className="w-full border rounded-xl p-3 mb-6 bg-white min-h-[90px]"
+        className="w-full border border-neutral-200 dark:border-neutral-700 rounded-xl p-3 mb-6 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px]"
       />
 
       <button
@@ -69,7 +77,7 @@ export default function Track() {
       </button>
 
       {active && (
-        <p className="text-sm text-neutral-600 mt-3">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-3">
           Running entry #{active.id} since {new Date(active.start_time).toLocaleString()}
         </p>
       )}
