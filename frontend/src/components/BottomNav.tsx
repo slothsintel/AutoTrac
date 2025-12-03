@@ -1,6 +1,15 @@
+import React from "react";
 import { NavLink } from "react-router-dom";
 
-const Tab = ({ to, label, icon }: { to:string; label:string; icon:JSX.Element }) => (
+const Tab = ({
+  to,
+  label,
+  icon,
+}: {
+  to: string;
+  label: string;
+  icon: React.ReactNode;   // <--- FIX
+}) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
@@ -12,6 +21,7 @@ const Tab = ({ to, label, icon }: { to:string; label:string; icon:JSX.Element })
     <span className="text-[12px]">{label}</span>
   </NavLink>
 );
+
 
 const Icon = {
   home:  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5 12 3l9 7.5v10a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 20.5z"/><path d="M9 22V12h6v10"/></svg>,
