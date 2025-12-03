@@ -5,18 +5,12 @@ type FeedCardProps = {
   title: string;
   subtitle?: string;
   right?: React.ReactNode;
+  icon?: React.ReactNode; 
   children?: React.ReactNode;
-  /** Optional: index in a list, used for slight staggered animation */
   index?: number;
 };
 
-export default function FeedCard({
-  title,
-  subtitle,
-  right,
-  children,
-  index = 0,
-}: FeedCardProps) {
+export default function FeedCard({ title, subtitle, right, icon, children, index = 0 }: FeedCardProps) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 8, scale: 0.98 }}
@@ -34,22 +28,29 @@ export default function FeedCard({
         rounded-2xl shadow-sm p-4 mb-3
       "
     >
-      <header className="flex items-center justify-between mb-2">
-        <div>
-          <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
-            {title}
-          </h3>
+        <header className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+            {icon && (
+            <span className="text-neutral-700 dark:text-neutral-300">
+                {icon}
+            </span>
+            )}
 
-          {subtitle && (
-            <p className="text-xs text-neutral-600 dark:text-neutral-400">
-              {subtitle}
-            </p>
-          )}
+            <div>
+            <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+                {title}
+            </h3>
+
+            {subtitle && (
+                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                {subtitle}
+                </p>
+            )}
+            </div>
         </div>
 
         {right}
-      </header>
-
+        </header>
       <div className="text-sm text-neutral-900 dark:text-neutral-100">
         {children}
       </div>

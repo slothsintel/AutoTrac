@@ -1,3 +1,23 @@
+const Icons = {
+  projects: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M3 6h6l2 3h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </svg>
+  ),
+  time: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  ),
+  income: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <rect x="3" y="6" width="18" height="12" rx="2" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+};
+
 import { useEffect, useState } from "react";
 import api from "../api";
 import FeedCard from "../components/FeedCard";
@@ -21,7 +41,11 @@ export default function Home() {
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
 
       {/* PROJECTS */}
-      <FeedCard title="Projects" subtitle={`${projects.length} total`}>
+      <FeedCard
+      title="Projects"
+      subtitle={`${projects.length} total`}
+      icon={Icons.projects}
+      >
         <ul className="list-disc ml-5">
           {projects.map(p => (
             <li 
@@ -35,7 +59,10 @@ export default function Home() {
       </FeedCard>
 
       {/* TIME ENTRIES */}
-      <FeedCard title="Recent time entries">
+      <FeedCard
+      title="Recent time entries"
+      icon={Icons.time}
+      >
         <ul className="space-y-2">
           {latest.map(e => (
             <li key={e.id} className="flex justify-between">
@@ -55,7 +82,10 @@ export default function Home() {
       </FeedCard>
 
       {/* INCOMES */}
-      <FeedCard title="Recent incomes">
+      <FeedCard
+      title="Recent incomes"
+      icon={Icons.income}
+      >
         <ul className="space-y-2">
           {incomes.map(i => (
             <li key={i.id} className="flex justify-between">
