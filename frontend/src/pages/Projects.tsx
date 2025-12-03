@@ -1,14 +1,29 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 
-type Project = { id:number; name:string; description?:string };
+type Project = { id: number; name: string; description?: string };
+
+const FolderIcon = (
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+  </svg>
+);
 
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
 
   useEffect(() => {
-    api.get("/projects/").then(r => setProjects(r.data));
+    api.get("/projects/").then((r) => setProjects(r.data));
   }, []);
 
   const add = async () => {
@@ -20,27 +35,35 @@ export default function Projects() {
 
   return (
     <div className="mx-auto max-w-md px-3 py-4 text-neutral-900 dark:text-neutral-100">
-      <h1 className="text-lg font-semibold mb-3 text-neutral-900 dark:text-neutral-100">
-        Projects
-      </h1>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-neutral-700 dark:text-neutral-300">
+          {FolderIcon}
+        </span>
+        <h1 className="text-lg font-semibold">Projects</h1>
+      </div>
 
       <div className="flex gap-2 mb-4">
         <input
-          className="flex-1 border border-neutral-200 dark:border-neutral-700 rounded-xl p-2 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+          className="flex-1 border border-neutral-200 dark:border-neutral-700 rounded-xl p-2 
+                     bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
           placeholder="New project"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
         />
-        <button className="px-4 rounded-xl bg-blue-600 text-white" onClick={add}>
+        <button
+          onClick={add}
+          className="px-4 rounded-xl bg-blue-600 text-white"
+        >
           Add
         </button>
       </div>
 
       <ul className="space-y-2">
-        {projects.map(p => (
+        {projects.map((p) => (
           <li
             key={p.id}
-            className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl p-3"
+            className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 
+                       rounded-xl p-3"
           >
             <div className="font-medium text-neutral-900 dark:text-neutral-100">
               {p.name}
