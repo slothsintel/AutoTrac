@@ -28,6 +28,13 @@ const Icon = {
   clock: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l3 2"/></svg>,
   folder:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h6l2 3h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>,
   more:  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>,
+  money: (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <rect x="3" y="6" width="18" height="12" rx="2" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+),
+
 };
 
 export default function BottomNav() {
@@ -37,8 +44,10 @@ export default function BottomNav() {
         <Tab to="/" label="Home" icon={Icon.home} />
         <Tab to="/track" label="Track" icon={Icon.clock} />
         <Tab to="/projects" label="Projects" icon={Icon.folder} />
+        <Tab to="/incomes" label="Incomes" icon={Icon.money} />
         <Tab to="/more" label="More" icon={Icon.more} />
       </div>
     </nav>
   );
 }
+
