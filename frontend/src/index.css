@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional: a simple background */
-body {
-  @apply bg-slate-950 text-slate-100;
-}
+/* Safe areas so bottom bar doesn’t overlap on iOS/Android */
+:root { --safe-bottom: env(safe-area-inset-bottom); }
+main { padding-bottom: calc(4rem + var(--safe-bottom)); }
