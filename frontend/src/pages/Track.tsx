@@ -27,7 +27,7 @@ const TimerIcon = (
   </svg>
 );
 
-const FIXED_PROJECTS = ["AutoVisuals", "AutoTrac", "AutoStock"];
+const FIXED = ["AutoVisuals", "AutoTrac", "AutoStock"] as const;
 
 export default function Track() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -35,40 +35,69 @@ export default function Track() {
   const [selectedName, setSelectedName] = useState<string>("");
   const [note, setNote] = useState("");
 
+  // -----------------------------
+  // Load projects + auto-create missing defaults
+  // -----------------------------
   useEffect(() => {
-    api.get("/projects/").then((r) => setProjects(r.data));
+    api.get("/projects/").then(async (r) => {
+      const existing: Project[] = r.data;
+      setProjects(existing);
+
+      const existingNames = existing.map((p) => p.name);
+      const missing = FIXED.filter((name) => !existingNames.includes(name));
+
+      // Auto-create any missing default projects
+      for (const name of missing) {
+        const res = await api.post("/projects/", { name });
+        const created: Project = res.data; // guaranteed Project
+        setProjects((prev) => [...prev, created]);
+      }
+    });
+
     api.get("/time-entries/").then((r) => {
-      const running = r.data.find((e: TimeEntry) => !e.end_time);
+      const running = (r.data as TimeEntry[]).find((e) => !e.end_time);
       setActive(running ?? null);
     });
   }, []);
 
   const isRunning = !!active;
-  const btnLabel = isRunning ? "Stop" : "Start";
 
+  // -----------------------------
+  // START tracking
+  // -----------------------------
   const start = async () => {
     if (!selectedName) return;
 
     const project = projects.find((p) => p.name === selectedName);
-    if (!project) return; // backend doesn't have this project yet
+
+    if (!project) {
+      alert("Project not ready yet — please wait a moment.");
+      return;
+    }
 
     const res = await api.post("/time-entries/", {
       project_id: project.id,
       start_time: new Date().toISOString(),
       note,
     });
+
     setActive(res.data);
     setNote("");
   };
 
+  // -----------------------------
+  // STOP tracking
+  // -----------------------------
   const stop = async () => {
     if (!active) return;
+
     const res = await api.post(`/time-entries/${active.id}/stop`);
     setActive(res.data);
   };
 
   return (
     <div className="mx-auto max-w-md px-3 py-4 text-neutral-900 dark:text-neutral-100">
+      {/* HEADER */}
       <div className="flex items-center gap-2 mb-3">
         <span className="text-neutral-700 dark:text-neutral-300">
           {TimerIcon}
@@ -76,6 +105,7 @@ export default function Track() {
         <h1 className="text-lg font-semibold">Time tracker</h1>
       </div>
 
+      {/* PROJECT SELECT */}
       <label className="block text-sm mb-1 text-neutral-600 dark:text-neutral-400">
         Project
       </label>
@@ -91,13 +121,14 @@ export default function Track() {
         <option value="" disabled>
           Select project…
         </option>
-        {FIXED_PROJECTS.map((name) => (
+        {FIXED.map((name) => (
           <option key={name} value={name}>
             {name}
           </option>
         ))}
       </select>
 
+      {/* NOTE INPUT */}
       <textarea
         placeholder="Note (optional)…"
         value={note}
@@ -108,14 +139,16 @@ export default function Track() {
                    text-neutral-900 dark:text-neutral-100 min-h-[90px]"
       />
 
+      {/* START / STOP BUTTON */}
       <button
         onClick={isRunning ? stop : start}
         className={`w-full py-4 rounded-full text-white text-lg font-semibold shadow-lg
           ${isRunning ? "bg-rose-600" : "bg-blue-600"}`}
       >
-        {btnLabel}
+        {isRunning ? "Stop" : "Start"}
       </button>
 
+      {/* RUNNING INFO */}
       {active && (
         <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-3">
           Running entry #{active.id} since{" "}

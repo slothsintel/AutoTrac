@@ -28,7 +28,7 @@ const MoneyIcon = (
   </svg>
 );
 
-const FIXED_PROJECTS = ["AutoVisuals", "AutoTrac", "AutoStock"];
+const FIXED = ["AutoVisuals", "AutoTrac", "AutoStock"] as const;
 
 export default function Incomes() {
   const [incomes, setIncomes] = useState<Income[]>([]);
@@ -38,16 +38,41 @@ export default function Incomes() {
   const [amount, setAmount] = useState("");
   const [source, setSource] = useState("");
 
+  // -----------------------------
+  // Fetch incomes + projects, auto-create missing defaults
+  // -----------------------------
   useEffect(() => {
     api.get("/incomes/").then((r) => setIncomes(r.data));
-    api.get("/projects/").then((r) => setProjects(r.data));
+
+    api.get("/projects/").then(async (r) => {
+      const existing = r.data as Project[];
+      setProjects(existing);
+
+      const existingNames = existing.map((p) => p.name);
+      const missing = FIXED.filter((name) => !existingNames.includes(name));
+
+      for (const name of missing) {
+        const res = await api.post("/projects/", { name });
+        setProjects((prev) => [...prev, res.data]);
+      }
+    });
   }, []);
 
+  // Map project_id -> name for display
+  const projectMap: Record<number, string> = {};
+  for (const p of projects) projectMap[p.id] = p.name;
+
+  // -----------------------------
+  // Add income
+  // -----------------------------
   const addIncome = async () => {
     if (!projectName || !amount) return;
 
     const project = projects.find((p) => p.name === projectName);
-    if (!project) return;
+    if (!project) {
+      alert("Project not found yet. Please wait a second or refresh.");
+      return;
+    }
 
     const res = await api.post("/incomes/", {
       project_id: project.id,
@@ -79,8 +104,16 @@ export default function Incomes() {
     }
   };
 
+  const projectColorClass = (name?: string) => {
+    if (name === "AutoVisuals") return "text-pink-500";
+    if (name === "AutoTrac") return "text-blue-500";
+    if (name === "AutoStock") return "text-green-500";
+    return "text-neutral-900 dark:text-neutral-100";
+  };
+
   return (
     <div className="mx-auto max-w-md px-3 py-4">
+      {/* Header */}
       <div className="flex items-center gap-2 mb-3 text-neutral-900 dark:text-neutral-100">
         <span className="text-neutral-700 dark:text-neutral-300">
           {MoneyIcon}
@@ -88,6 +121,7 @@ export default function Incomes() {
         <h1 className="text-lg font-semibold">Incomes</h1>
       </div>
 
+      {/* Form */}
       <div className="space-y-3 mb-6">
         <select
           className="w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border rounded-xl p-2"
@@ -95,7 +129,7 @@ export default function Incomes() {
           onChange={(e) => setProjectName(e.target.value)}
         >
           <option value="">Choose project…</option>
-          {FIXED_PROJECTS.map((name) => (
+          {FIXED.map((name) => (
             <option key={name} value={name}>
               {name}
             </option>
@@ -138,28 +172,42 @@ export default function Incomes() {
         </button>
       </div>
 
+      {/* List */}
       <ul className="space-y-2">
-        {incomes.map((i) => (
-          <li
-            key={i.id}
-            className="bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-xl p-3 flex justify-between"
-          >
-            <div>
-              <div className="font-medium text-neutral-900 dark:text-neutral-100">
-                {formatAmount(i.currency, i.amount)}
+        {incomes.map((i) => {
+          const pname = projectMap[i.project_id];
+          return (
+            <li
+              key={i.id}
+              className="bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-xl p-3 flex justify-between"
+            >
+              <div>
+                <div className="font-medium text-neutral-900 dark:text-neutral-100">
+                  {formatAmount(i.currency, i.amount)}
+                </div>
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {i.date}
+                </div>
+                {pname && (
+                  <div
+                    className={
+                      "text-xs mt-1 font-medium " +
+                      projectColorClass(pname)
+                    }
+                  >
+                    {pname}
+                  </div>
+                )}
               </div>
-              <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                {i.date}
-              </div>
-            </div>
 
-            {i.source && (
-              <div className="text-xs text-neutral-600 dark:text-neutral-300">
-                {i.source}
-              </div>
-            )}
-          </li>
-        ))}
+              {i.source && (
+                <div className="text-xs text-neutral-600 dark:text-neutral-300">
+                  {i.source}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
