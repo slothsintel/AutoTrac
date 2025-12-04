@@ -24,41 +24,33 @@ export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedName, setSelectedName] = useState("");
 
-  // -----------------------------
-  // Fetch existing + auto-create missing projects
-  // -----------------------------
+  // Load existing projects
   useEffect(() => {
-    api.get("/projects/").then(async (r) => {
-      const existing = r.data as Project[];
-      setProjects(existing);
-
-      const existingNames = existing.map((p) => p.name);
-      const missing = FIXED.filter((name) => !existingNames.includes(name));
-
-      for (const name of missing) {
-        const res = await api.post("/projects/", { name });
-        setProjects((prev) => [...prev, res.data]);
-      }
+    api.get("/projects/").then((r) => {
+      setProjects(r.data as Project[]);
     });
   }, []);
 
   const existingNames = projects.map((p) => p.name);
-  const availableChoices = FIXED.filter((name) => !existingNames.includes(name));
 
-  // -----------------------------
-  // Add new default project
-  // -----------------------------
   const add = async () => {
     if (!selectedName) return;
 
-    const exists = projects.some((p) => p.name === selectedName);
-
-    if (!exists) {
-      const res = await api.post("/projects/", { name: selectedName });
-      setProjects([res.data, ...projects]);
+    if (existingNames.includes(selectedName)) {
+      alert("This project already exists.");
+      setSelectedName("");
+      return;
     }
 
-    setSelectedName("");
+    try {
+      const res = await api.post("/projects/", { name: selectedName });
+      const created = res.data as Project;
+      setProjects((prev) => [created, ...prev]);
+      setSelectedName("");
+    } catch (err) {
+      alert("Failed to create project. Please check backend.");
+      console.error(err);
+    }
   };
 
   return (
@@ -70,7 +62,7 @@ export default function Projects() {
         <h1 className="text-lg font-semibold">Projects</h1>
       </div>
 
-      {/* PROJECT SELECT */}
+      {/* PROJECT SELECT + ADD */}
       <div className="flex gap-2 mb-4">
         <select
           className="flex-1 border border-neutral-200 dark:border-neutral-700 rounded-xl p-2 
@@ -78,13 +70,8 @@ export default function Projects() {
           value={selectedName}
           onChange={(e) => setSelectedName(e.target.value)}
         >
-          <option value="">
-            {availableChoices.length
-              ? "Choose project to add…"
-              : "All system projects added"}
-          </option>
-
-          {availableChoices.map((name) => (
+          <option value="">Choose project to add…</option>
+          {FIXED.map((name) => (
             <option key={name} value={name}>
               {name}
             </option>
@@ -100,7 +87,7 @@ export default function Projects() {
         </button>
       </div>
 
-      {/* EXISTING PROJECTS */}
+      {/* EXISTING PROJECTS LIST */}
       <ul className="space-y-2">
         {projects.map((p) => (
           <li

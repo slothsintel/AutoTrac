@@ -35,23 +35,10 @@ export default function Track() {
   const [selectedName, setSelectedName] = useState<string>("");
   const [note, setNote] = useState("");
 
-  // -----------------------------
-  // Load projects + auto-create missing defaults
-  // -----------------------------
+  // Load existing projects and current running entry
   useEffect(() => {
-    api.get("/projects/").then(async (r) => {
-      const existing: Project[] = r.data;
-      setProjects(existing);
-
-      const existingNames = existing.map((p) => p.name);
-      const missing = FIXED.filter((name) => !existingNames.includes(name));
-
-      // Auto-create any missing default projects
-      for (const name of missing) {
-        const res = await api.post("/projects/", { name });
-        const created: Project = res.data; // guaranteed Project
-        setProjects((prev) => [...prev, created]);
-      }
+    api.get("/projects/").then((r) => {
+      setProjects(r.data as Project[]);
     });
 
     api.get("/time-entries/").then((r) => {
@@ -62,18 +49,33 @@ export default function Track() {
 
   const isRunning = !!active;
 
-  // -----------------------------
+  // Ensure a project exists in backend for given name
+  const ensureProjectByName = async (name: string): Promise<Project | null> => {
+    if (!name) return null;
+
+    // Try existing first
+    const existing = projects.find((p) => p.name === name);
+    if (existing) return existing;
+
+    // Otherwise create it
+    try {
+      const res = await api.post("/projects/", { name });
+      const created = res.data as Project;
+      setProjects((prev) => [...prev, created]);
+      return created;
+    } catch (err) {
+      alert("Unable to create project. Please check backend.");
+      console.error(err);
+      return null;
+    }
+  };
+
   // START tracking
-  // -----------------------------
   const start = async () => {
     if (!selectedName) return;
 
-    const project = projects.find((p) => p.name === selectedName);
-
-    if (!project) {
-      alert("Project not ready yet — please wait a moment.");
-      return;
-    }
+    const project = await ensureProjectByName(selectedName);
+    if (!project) return;
 
     const res = await api.post("/time-entries/", {
       project_id: project.id,
@@ -81,18 +83,16 @@ export default function Track() {
       note,
     });
 
-    setActive(res.data);
+    setActive(res.data as TimeEntry);
     setNote("");
   };
 
-  // -----------------------------
   // STOP tracking
-  // -----------------------------
   const stop = async () => {
     if (!active) return;
 
     const res = await api.post(`/time-entries/${active.id}/stop`);
-    setActive(res.data);
+    setActive(res.data as TimeEntry);
   };
 
   return (
