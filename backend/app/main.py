@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 import csv
 import io
@@ -10,20 +10,28 @@ from sqlalchemy.orm import Session
 from .db import Base, engine, SessionLocal
 from . import models, schemas
 
-# Create tables
+# create tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="AutoTrac")
+app = FastAPI(title="AutoTrac backend")
 
-# CORS for local dev; you can tighten later
+# ---------------- CORS ----------------
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://autotrac.slothsintel.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
+# ---------------- DB dependency ----------------
 
 def get_db():
     db = SessionLocal()
@@ -33,31 +41,71 @@ def get_db():
         db.close()
 
 
-# --- Projects ---
+# ---------------- Health ----------------
+
+@app.get("/")
+def root():
+    return {
+        "service": "AutoTrac backend",
+        "status": "ok",
+        "docs": "/docs",
+        "time": datetime.utcnow().isoformat(),
+    }
+
+
+# ---------------- Projects ----------------
+
+@app.get("/projects/", response_model=List[schemas.Project])
+def list_projects(db: Session = Depends(get_db)):
+    return db.query(models.Project).order_by(models.Project.id.asc()).all()
 
 
 @app.post("/projects/", response_model=schemas.Project)
 def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)):
-    db_project = models.Project(**project.dict())
+    # prevent duplicates by name
+    existing = (
+        db.query(models.Project)
+        .filter(models.Project.name == project.name)
+        .first()
+    )
+    if existing:
+        return existing
+
+    db_project = models.Project(
+        name=project.name,
+        description=project.description,
+    )
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
     return db_project
 
 
-@app.get("/projects/", response_model=list[schemas.Project])
-def list_projects(db: Session = Depends(get_db)):
-    return db.query(models.Project).all()
+# ---------------- Time entries ----------------
 
-
-# --- Time entries ---
+@app.get("/time-entries/", response_model=List[schemas.TimeEntry])
+def list_time_entries(
+    project_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    q = db.query(models.TimeEntry)
+    if project_id is not None:
+        q = q.filter(models.TimeEntry.project_id == project_id)
+    return q.order_by(models.TimeEntry.start_time.desc()).all()
 
 
 @app.post("/time-entries/", response_model=schemas.TimeEntry)
-def create_time_entry(entry: schemas.TimeEntryCreate, db: Session = Depends(get_db)):
-    project = db.query(models.Project).filter_by(id=entry.project_id).first()
+def create_time_entry(
+    entry: schemas.TimeEntryCreate,
+    db: Session = Depends(get_db),
+):
+    # ensure project exists
+    project = db.query(models.Project).filter(
+        models.Project.id == entry.project_id
+    ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
     db_entry = models.TimeEntry(
         project_id=entry.project_id,
         start_time=entry.start_time,
@@ -72,182 +120,92 @@ def create_time_entry(entry: schemas.TimeEntryCreate, db: Session = Depends(get_
 
 @app.post("/time-entries/{entry_id}/stop", response_model=schemas.TimeEntry)
 def stop_time_entry(entry_id: int, db: Session = Depends(get_db)):
-    """Set end_time=now for a running entry."""
-    entry = db.query(models.TimeEntry).filter_by(id=entry_id).first()
+    entry = (
+        db.query(models.TimeEntry)
+        .filter(models.TimeEntry.id == entry_id)
+        .first()
+    )
     if not entry:
         raise HTTPException(status_code=404, detail="Time entry not found")
-    if entry.end_time:
-        return entry
-    entry.end_time = datetime.utcnow()
-    db.commit()
-    db.refresh(entry)
+
+    if entry.end_time is None:
+        entry.end_time = datetime.utcnow()
+        db.commit()
+        db.refresh(entry)
+
     return entry
 
 
-@app.get("/time-entries/", response_model=list[schemas.TimeEntry])
-def list_time_entries(
+# ---------------- Incomes ----------------
+
+@app.get("/incomes/", response_model=List[schemas.Income])
+def list_incomes(
     project_id: Optional[int] = None,
-    date_from: Optional[datetime] = None,
-    date_to: Optional[datetime] = None,
     db: Session = Depends(get_db),
 ):
-    q = db.query(models.TimeEntry)
+    q = db.query(models.IncomeRecord)
     if project_id is not None:
-        q = q.filter(models.TimeEntry.project_id == project_id)
-    if date_from is not None:
-        q = q.filter(models.TimeEntry.start_time >= date_from)
-    if date_to is not None:
-        q = q.filter(models.TimeEntry.start_time <= date_to)
-    return q.order_by(models.TimeEntry.start_time.desc()).all()
-
-
-# --- Income records ---
+        q = q.filter(models.IncomeRecord.project_id == project_id)
+    return q.order_by(models.IncomeRecord.date.desc()).all()
 
 
 @app.post("/incomes/", response_model=schemas.Income)
-def create_income(income: schemas.IncomeCreate, db: Session = Depends(get_db)):
-    project = db.query(models.Project).filter_by(id=income.project_id).first()
+def create_income(
+    income: schemas.IncomeCreate,
+    db: Session = Depends(get_db),
+):
+    project = db.query(models.Project).filter(
+        models.Project.id == income.project_id
+    ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    db_income = models.IncomeRecord(**income.dict())
+
+    db_income = models.IncomeRecord(
+        project_id=income.project_id,
+        date=income.date,
+        amount=income.amount,
+        currency=income.currency,
+        source=income.source,
+        note=income.note,
+    )
     db.add(db_income)
     db.commit()
     db.refresh(db_income)
     return db_income
 
 
-@app.get("/incomes/", response_model=list[schemas.Income])
-def list_incomes(
-    project_id: Optional[int] = None,
-    date_from: Optional[datetime] = None,
-    date_to: Optional[datetime] = None,
-    db: Session = Depends(get_db),
-):
-    q = db.query(models.IncomeRecord)
-    if project_id is not None:
-        q = q.filter(models.IncomeRecord.project_id == project_id)
-    if date_from is not None:
-        q = q.filter(models.IncomeRecord.date >= date_from)
-    if date_to is not None:
-        q = q.filter(models.IncomeRecord.date <= date_to)
-    return q.order_by(models.IncomeRecord.date.desc()).all()
+# ---------------- CSV export (optional) ----------------
 
-
-# --- Per-project summary ---
-
-
-@app.get("/projects/{project_id}/summary", response_model=schemas.ProjectSummary)
-def project_summary(
+@app.get("/projects/{project_id}/incomes/export")
+def export_project_incomes_csv(
     project_id: int,
-    date_from: Optional[datetime] = None,
-    date_to: Optional[datetime] = None,
     db: Session = Depends(get_db),
 ):
-    project = db.query(models.Project).filter_by(id=project_id).first()
+    project = (
+        db.query(models.Project)
+        .filter(models.Project.id == project_id)
+        .first()
+    )
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    time_q = db.query(models.TimeEntry).filter_by(project_id=project_id)
-    income_q = db.query(models.IncomeRecord).filter_by(project_id=project_id)
-
-    if date_from is not None:
-        time_q = time_q.filter(models.TimeEntry.start_time >= date_from)
-        income_q = income_q.filter(models.IncomeRecord.date >= date_from)
-    if date_to is not None:
-        time_q = time_q.filter(models.TimeEntry.start_time <= date_to)
-        income_q = income_q.filter(models.IncomeRecord.date <= date_to)
-
-    time_entries = time_q.all()
-    incomes = income_q.all()
-
-    total_minutes = 0.0
-    for e in time_entries:
-        if e.end_time:
-            delta = e.end_time - e.start_time
-        else:
-            delta = datetime.utcnow() - e.start_time
-        total_minutes += delta.total_seconds() / 60
-
-    total_income = sum(i.amount for i in incomes)
-    eff_rate = None
-    if total_minutes > 0:
-        eff_rate = total_income / (total_minutes / 60)
-
-    return schemas.ProjectSummary(
-        project=project,
-        total_minutes=total_minutes,
-        total_income=total_income,
-        effective_hourly_rate=eff_rate,
+    incomes = (
+        db.query(models.IncomeRecord)
+        .filter(models.IncomeRecord.project_id == project_id)
+        .order_by(models.IncomeRecord.date.asc())
+        .all()
     )
-
-
-# --- CSV export ---
-
-
-@app.get("/projects/{project_id}/export/time.csv")
-def export_time_csv(
-    project_id: int,
-    date_from: Optional[datetime] = None,
-    date_to: Optional[datetime] = None,
-    db: Session = Depends(get_db),
-):
-    q = db.query(models.TimeEntry).filter_by(project_id=project_id)
-    if date_from is not None:
-        q = q.filter(models.TimeEntry.start_time >= date_from)
-    if date_to is not None:
-        q = q.filter(models.TimeEntry.start_time <= date_to)
-    entries = q.order_by(models.TimeEntry.start_time.asc()).all()
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["id", "project_id", "start_time", "end_time", "note", "duration_minutes"])
-    for e in entries:
-        end_time = e.end_time or datetime.utcnow()
-        duration_min = (end_time - e.start_time).total_seconds() / 60
-        writer.writerow(
-            [
-                e.id,
-                e.project_id,
-                e.start_time.isoformat(),
-                e.end_time.isoformat() if e.end_time else "",
-                e.note or "",
-                f"{duration_min:.2f}",
-            ]
-        )
+    writer.writerow(["date", "amount", "currency", "source", "note"])
 
-    csv_content = output.getvalue()
-    filename = f"project_{project_id}_time_entries.csv"
-    return Response(
-        content=csv_content,
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
-
-
-@app.get("/projects/{project_id}/export/incomes.csv")
-def export_incomes_csv(
-    project_id: int,
-    date_from: Optional[datetime] = None,
-    date_to: Optional[datetime] = None,
-    db: Session = Depends(get_db),
-):
-    q = db.query(models.IncomeRecord).filter_by(project_id=project_id)
-    if date_from is not None:
-        q = q.filter(models.IncomeRecord.date >= date_from)
-    if date_to is not None:
-        q = q.filter(models.IncomeRecord.date <= date_to)
-    incomes = q.order_by(models.IncomeRecord.date.asc()).all()
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["id", "project_id", "date", "amount", "source", "note"])
     for inc in incomes:
         writer.writerow(
             [
-                inc.id,
-                inc.project_id,
                 inc.date.isoformat(),
                 f"{inc.amount:.2f}",
+                inc.currency or "",
                 inc.source or "",
                 inc.note or "",
             ]
@@ -260,12 +218,3 @@ def export_incomes_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
-
-@app.get("/", include_in_schema=False)
-def root():
-    return {
-        "service": "AutoTrac backend",
-        "status": "ok",
-        "docs": "/docs",
-        "time": datetime.utcnow().isoformat()
-    }
