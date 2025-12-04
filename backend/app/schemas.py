@@ -1,7 +1,28 @@
 from datetime import datetime
-from pydantic import BaseModel
 from typing import Optional
+from pydantic import BaseModel
 
+
+# ---------- Project ----------
+
+class ProjectBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
+class Project(ProjectBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+# ---------- Time entry ----------
 
 class TimeEntryBase(BaseModel):
     project_id: int
@@ -18,13 +39,16 @@ class TimeEntry(TimeEntryBase):
     id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
+
+# ---------- Income ----------
 
 class IncomeBase(BaseModel):
     project_id: int
     date: datetime
     amount: float
+    currency: Optional[str] = None
     source: Optional[str] = None
     note: Optional[str] = None
 
@@ -37,29 +61,4 @@ class Income(IncomeBase):
     id: int
 
     class Config:
-        from_attributes = True
-
-
-class ProjectBase(BaseModel):
-    name: str
-    client: Optional[str] = None
-    hourly_rate: Optional[float] = None
-    notes: Optional[str] = None
-
-
-class ProjectCreate(ProjectBase):
-    pass
-
-
-class Project(ProjectBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-class ProjectSummary(BaseModel):
-    project: Project
-    total_minutes: float
-    total_income: float
-    effective_hourly_rate: Optional[float]
+        orm_mode = True
