@@ -1,11 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "sqlite:///./autotrac.db"
+# Use a file-based SQLite database in the backend directory
+SQLALCHEMY_DATABASE_URL = "sqlite:///./autotrac.db"
 
 engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},  # needed for SQLite + FastAPI
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
