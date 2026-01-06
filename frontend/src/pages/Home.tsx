@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api, { endpoints } from "../api";
 import FeedCard from "../components/FeedCard";
 import {
@@ -32,9 +32,9 @@ const FIXED = ["AutoVisuals", "AutoTrac", "AutoStock"] as const;
 type FixedProject = (typeof FIXED)[number];
 
 const PROJECT_COLORS: Record<FixedProject, string> = {
-  AutoVisuals: "#ec4899", // pink-500
-  AutoTrac: "#3b82f6", // blue-500
-  AutoStock: "#22c55e", // green-500
+  AutoVisuals: "#ec4899",
+  AutoTrac: "#3b82f6",
+  AutoStock: "#22c55e",
 };
 
 export default function Home() {
@@ -43,21 +43,55 @@ export default function Home() {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [filter, setFilter] = useState<string>("All");
 
+  const loadAll = async () => {
+    try {
+      const [pRes, tRes, iRes] = await Promise.all([
+        api.get(endpoints.projects),
+        api.get(endpoints.timeEntries),
+        api.get(endpoints.incomes),
+      ]);
+
+      setProjects(pRes.data as Project[]);
+      setLatest(tRes.data as TimeEntry[]);
+      setIncomes(iRes.data as Income[]);
+    } catch (err) {
+      console.error("Home loadAll failed:", err);
+      // Keep UI usable; you can add a toast later if you want
+    }
+  };
+
+  // Load once
   useEffect(() => {
-    api.get(endpoints.projects).then((r) => setProjects(r.data));
-    api.get(endpoints.timeEntries).then((r) => setLatest(r.data));
-    api.get(endpoints.incomes).then((r) => setIncomes(r.data));
+    loadAll();
   }, []);
 
-  // Map project_id -> project name
-  const projectMap: Record<number, string> = {};
-  for (const p of projects) projectMap[p.id] = p.name;
+  // Reload whenever user returns to the tab/app (mobile + desktop friendly)
+  useEffect(() => {
+    const onFocus = () => loadAll();
+    const onVis = () => {
+      if (!document.hidden) loadAll();
+    };
 
-  const matchesFilter = (projectName: string) =>
-    filter === "All" || filter === projectName;
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
+  // Map project_id -> project name (memo so it updates correctly)
+  const projectMap = useMemo(() => {
+    const m: Record<number, string> = {};
+    for (const p of projects) m[p.id] = p.name;
+    return m;
+  }, [projects]);
+
+  const matchesFilter = (projectName?: string) =>
+    filter === "All" || (projectName && filter === projectName);
 
   // ---------- TOTALS (all time) ----------
-
   function calculateTimeTotals(entries: TimeEntry[]) {
     const totals: Record<FixedProject, number> = {
       AutoVisuals: 0,
@@ -67,14 +101,13 @@ export default function Home() {
 
     for (const e of entries) {
       if (!e.end_time) continue;
+
       const durationSec =
         (new Date(e.end_time).getTime() - new Date(e.start_time).getTime()) /
         1000;
 
       const name = projectMap[e.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) {
-        totals[name] += durationSec;
-      }
+      if (name && totals[name] != null) totals[name] += durationSec;
     }
 
     return totals;
@@ -89,9 +122,7 @@ export default function Home() {
 
     for (const inc of list) {
       const name = projectMap[inc.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) {
-        totals[name] += inc.amount;
-      }
+      if (name && totals[name] != null) totals[name] += inc.amount;
     }
 
     return totals;
@@ -101,7 +132,6 @@ export default function Home() {
   const incomeTotals = calculateIncomeTotals(incomes);
 
   // ---------- WEEKLY SUMMARY (last 7 days) ----------
-
   function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
     const totals: Record<FixedProject, number> = {
       AutoVisuals: 0,
@@ -114,14 +144,13 @@ export default function Home() {
 
     for (const e of entries) {
       if (!e.end_time) continue;
+
       const start = new Date(e.start_time).getTime();
       if (start < sevenDaysAgo) continue;
 
       const durationSec = (new Date(e.end_time).getTime() - start) / 1000;
       const name = projectMap[e.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) {
-        totals[name] += durationSec;
-      }
+      if (name && totals[name] != null) totals[name] += durationSec;
     }
 
     return totals;
@@ -142,9 +171,7 @@ export default function Home() {
       if (d < sevenDaysAgo) continue;
 
       const name = projectMap[inc.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) {
-        totals[name] += inc.amount;
-      }
+      if (name && totals[name] != null) totals[name] += inc.amount;
     }
 
     return totals;
@@ -152,8 +179,6 @@ export default function Home() {
 
   const weeklyTimeTotals = calculateWeeklyTimeTotals(latest);
   const weeklyIncomeTotals = calculateWeeklyIncomeTotals(incomes);
-
-  // ---------- helpers ----------
 
   const fmtHours = (sec: number) => {
     const h = Math.floor(sec / 3600);
@@ -170,6 +195,7 @@ export default function Home() {
   const filteredTimeEntries = latest.filter((e) =>
     matchesFilter(projectMap[e.project_id])
   );
+
   const filteredIncomes = incomes.filter((i) =>
     matchesFilter(projectMap[i.project_id])
   );
@@ -194,7 +220,6 @@ export default function Home() {
       {/* TOTALS BAR CHARTS */}
       <FeedCard title="Totals overview">
         <div className="space-y-4">
-          {/* Time chart */}
           <div>
             <p className="text-xs mb-1 text-neutral-600 dark:text-neutral-400">
               Total time (hours) per project
@@ -219,7 +244,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Income chart */}
           <div>
             <p className="text-xs mb-1 text-neutral-600 dark:text-neutral-400">
               Total income (£) per project
@@ -271,35 +295,31 @@ export default function Home() {
         </ul>
       </FeedCard>
 
-      {/* PROJECTS LIST */}
       <FeedCard title="Projects" subtitle={`${projects.length} total`}>
         <ul className="list-disc ml-5">
-          {projects
-            .filter((p) => matchesFilter(p.name))
-            .map((p) => (
-              <li
-                key={p.id}
-                className={
-                  p.name === "AutoVisuals"
-                    ? "text-pink-500"
-                    : p.name === "AutoTrac"
-                    ? "text-blue-500"
-                    : p.name === "AutoStock"
-                    ? "text-green-500"
-                    : ""
-                }
-              >
-                {p.name}
-              </li>
-            ))}
+          {projects.filter((p) => matchesFilter(p.name)).map((p) => (
+            <li
+              key={p.id}
+              className={
+                p.name === "AutoVisuals"
+                  ? "text-pink-500"
+                  : p.name === "AutoTrac"
+                  ? "text-blue-500"
+                  : p.name === "AutoStock"
+                  ? "text-green-500"
+                  : ""
+              }
+            >
+              {p.name}
+            </li>
+          ))}
         </ul>
       </FeedCard>
 
-      {/* TIME ENTRIES */}
       <FeedCard title="Recent time entries">
         <ul className="space-y-2">
           {filteredTimeEntries.map((e) => {
-            const pname = projectMap[e.project_id];
+            const pname = projectMap[e.project_id] || `Project #${e.project_id}`;
             const colorClass =
               pname === "AutoVisuals"
                 ? "text-pink-500"
@@ -323,11 +343,10 @@ export default function Home() {
         </ul>
       </FeedCard>
 
-      {/* INCOMES */}
       <FeedCard title="Recent incomes">
         <ul className="space-y-2">
           {filteredIncomes.map((i) => {
-            const pname = projectMap[i.project_id];
+            const pname = projectMap[i.project_id] || `Project #${i.project_id}`;
             const colorClass =
               pname === "AutoVisuals"
                 ? "text-pink-500"
