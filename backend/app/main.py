@@ -6,6 +6,7 @@ import io
 from fastapi import FastAPI, Depends, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
 from .db import Base, engine, SessionLocal
 from . import models, schemas
@@ -218,3 +219,36 @@ def export_project_incomes_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+@app.delete("/incomes/{income_id}/")
+def delete_income(income_id: int, db: Session = Depends(get_db)):
+    obj = db.query(models.IncomeRecord).filter(models.IncomeRecord.id == income_id).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Income not found")
+    db.delete(obj)
+    db.commit()
+    return {"ok": True, "deleted_income_id": income_id}
+
+@app.delete("/time-entries/{entry_id}/")
+def delete_time_entry(entry_id: int, db: Session = Depends(get_db)):
+    obj = db.query(models.TimeEntry).filter(models.TimeEntry.id == entry_id).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Time entry not found")
+    db.delete(obj)
+    db.commit()
+    return {"ok": True, "deleted_time_entry_id": entry_id}
+
+@app.delete("/projects/{project_id}/")
+def delete_project(project_id: int, db: Session = Depends(get_db)):
+    proj = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not proj:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # delete children first (safe if you don't have cascade configured)
+    db.query(models.TimeEntry).filter(models.TimeEntry.project_id == project_id).delete()
+    db.query(models.IncomeRecord).filter(models.IncomeRecord.project_id == project_id).delete()
+
+    db.delete(proj)
+    db.commit()
+    return {"ok": True, "deleted_project_id": project_id}
+
