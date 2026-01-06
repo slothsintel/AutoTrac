@@ -12,7 +12,6 @@ import {
 } from "recharts";
 
 type Project = { id: number; name: string };
-
 type TimeEntry = {
   id: number;
   project_id: number;
@@ -20,14 +19,13 @@ type TimeEntry = {
   end_time: string | null;
   note?: string;
 };
-
 type Income = {
   id: number;
   project_id: number;
-  date: string; // may be "YYYY-MM-DD" OR full datetime string
+  date: string;
   amount: number;
-  currency?: string; // GBP, USD, HKD, EUR, RMB...
-  source?: string;
+  currency?: string | null;
+  source?: string | null;
 };
 
 const FIXED = ["AutoVisuals", "AutoTrac", "AutoStock"] as const;
@@ -41,19 +39,21 @@ const PROJECT_COLORS: Record<FixedProject, string> = {
 
 const DAYS = 30;
 
-// --------------------
-// FX (client-side GBP conversion)
-// --------------------
+// -------------------- FX --------------------
 type FxRates = Record<string, number>;
 const FX_TTL_MS = 12 * 60 * 60 * 1000;
 
 const fxKey = (cur: string) => `fx_${cur.toUpperCase()}_GBP`;
 
+function normCur(c?: string | null) {
+  // ✅ default missing currency to GBP
+  return (c || "GBP").toUpperCase();
+}
+
 async function fetchRateToGBP(curRaw: string): Promise<number> {
-  const cur = (curRaw || "GBP").toUpperCase();
+  const cur = normCur(curRaw);
   if (cur === "GBP") return 1;
 
-  // localStorage cache
   try {
     const cached = localStorage.getItem(fxKey(cur));
     if (cached) {
@@ -68,16 +68,17 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
       }
     }
   } catch {
-    // ignore cache errors
+    // ignore
   }
 
-  // fetch live rate (no key)
   const url = `https://api.exchangerate.host/latest?base=${encodeURIComponent(
     cur
   )}&symbols=GBP`;
+
   const res = await fetch(url);
   if (!res.ok) throw new Error(`FX fetch failed: ${res.status}`);
   const data = await res.json();
+
   const rate = Number(data?.rates?.GBP);
   if (!Number.isFinite(rate) || rate <= 0) throw new Error("Bad FX rate");
 
@@ -86,20 +87,19 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
   } catch {
     // ignore
   }
+
   return rate;
 }
 
-function toGBP(amount: number, currency?: string, rates?: FxRates): number {
-  const cur = (currency || "GBP").toUpperCase();
+function toGBP(amount: number, currency?: string | null, rates?: FxRates): number {
+  const cur = normCur(currency);
   if (cur === "GBP") return Number(amount) || 0;
   const r = rates?.[cur];
-  if (!r) return 0; // will render 0 until rates arrive
+  if (!r) return Number(amount) || 0; // fallback
   return (Number(amount) || 0) * r;
 }
 
-// --------------------
-// Date helpers
-// --------------------
+// -------------------- Dates --------------------
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const toDayKey = (d: Date) =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -129,7 +129,6 @@ export default function Home() {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [filter, setFilter] = useState<string>("All");
-
   const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
   const loadAll = async () => {
@@ -139,7 +138,6 @@ export default function Home() {
         api.get(endpoints.timeEntries),
         api.get(endpoints.incomes),
       ]);
-
       setProjects(pRes.data as Project[]);
       setTimeEntries(tRes.data as TimeEntry[]);
       setIncomes(iRes.data as Income[]);
@@ -148,12 +146,10 @@ export default function Home() {
     }
   };
 
-  // initial load
   useEffect(() => {
     loadAll();
   }, []);
 
-  // refresh on focus/visibility
   useEffect(() => {
     const onFocus = () => loadAll();
     const onVis = () => {
@@ -167,7 +163,6 @@ export default function Home() {
     };
   }, []);
 
-  // map project_id -> name
   const projectMap = useMemo(() => {
     const m: Record<number, string> = {};
     for (const p of projects) m[p.id] = p.name;
@@ -177,23 +172,13 @@ export default function Home() {
   const matchesFilter = (projectName?: string) =>
     filter === "All" || (projectName && filter === projectName);
 
-  const projectColorClass = (name?: string) => {
-    if (name === "AutoVisuals") return "text-pink-500";
-    if (name === "AutoTrac") return "text-blue-500";
-    if (name === "AutoStock") return "text-green-500";
-    return "text-neutral-900 dark:text-neutral-100";
-  };
-
-  // --------------------
-  // FX: load missing currencies seen in incomes
-  // --------------------
+  // FX: load currencies in incomes
   useEffect(() => {
     let cancelled = false;
 
     const currencies = Array.from(
-      new Set((incomes || []).map((i) => (i.currency || "GBP").toUpperCase()))
+      new Set((incomes || []).map((i) => normCur(i.currency)))
     );
-
     const missing = currencies.filter((c) => c !== "GBP" && !fxRates[c]);
     if (missing.length === 0) return;
 
@@ -220,38 +205,6 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomes]);
 
-  // --------------------
-  // Delete handlers (optional, if your backend supports these DELETE endpoints)
-  // --------------------
-  const deleteTimeEntry = async (entryId: number) => {
-    const yes = window.confirm(`Delete time entry #${entryId}?`);
-    if (!yes) return;
-
-    try {
-      await api.delete(`${endpoints.timeEntries}${entryId}/`);
-      setTimeEntries((prev) => prev.filter((e) => e.id !== entryId));
-    } catch (err) {
-      alert("Failed to delete time entry.");
-      console.error(err);
-    }
-  };
-
-  const deleteIncome = async (incomeId: number) => {
-    const yes = window.confirm(`Delete income #${incomeId}?`);
-    if (!yes) return;
-
-    try {
-      await api.delete(`${endpoints.incomes}${incomeId}/`);
-      setIncomes((prev) => prev.filter((i) => i.id !== incomeId));
-    } catch (err) {
-      alert("Failed to delete income.");
-      console.error(err);
-    }
-  };
-
-  // --------------------
-  // Stacked-by-date data (last N days)
-  // --------------------
   const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
 
   const dailyTimeData: DailyRow[] = useMemo(() => {
@@ -260,14 +213,12 @@ export default function Home() {
 
     for (const e of timeEntries) {
       if (!e.end_time) continue;
-
       const pname = projectMap[e.project_id] as FixedProject | undefined;
       if (!pname || !(pname in PROJECT_COLORS)) continue;
 
       const start = new Date(e.start_time);
       const end = new Date(e.end_time);
-
-      const dayKey = toDayKey(start); // start-date attribution
+      const dayKey = toDayKey(start);
       if (!rows.has(dayKey)) continue;
 
       const durationHours = (end.getTime() - start.getTime()) / 1000 / 3600;
@@ -285,20 +236,15 @@ export default function Home() {
       const pname = projectMap[inc.project_id] as FixedProject | undefined;
       if (!pname || !(pname in PROJECT_COLORS)) continue;
 
-      // ✅ Robust: works for "YYYY-MM-DD" OR datetime strings
-      const dayKey = toDayKey(new Date(inc.date));
+      const dayKey = toDayKey(new Date(inc.date)); // robust
       if (!rows.has(dayKey)) continue;
 
-      // ✅ Convert to GBP for charts
       rows.get(dayKey)![pname] += toGBP(inc.amount, inc.currency, fxRates);
     }
 
     return Array.from(rows.values());
   }, [incomes, projectMap, lastNDaysKeys, fxRates]);
 
-  // --------------------
-  // Weekly summary (last 7 days)
-  // --------------------
   function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
     const totals: Record<FixedProject, number> = {
       AutoVisuals: 0,
@@ -311,7 +257,6 @@ export default function Home() {
 
     for (const e of entries) {
       if (!e.end_time) continue;
-
       const start = new Date(e.start_time).getTime();
       if (start < sevenDaysAgo) continue;
 
@@ -319,7 +264,6 @@ export default function Home() {
       const name = projectMap[e.project_id] as FixedProject | undefined;
       if (name && totals[name] != null) totals[name] += durationSec;
     }
-
     return totals;
   }
 
@@ -338,10 +282,10 @@ export default function Home() {
       if (d < sevenDaysAgo) continue;
 
       const name = projectMap[inc.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null)
+      if (name && totals[name] != null) {
         totals[name] += toGBP(inc.amount, inc.currency, fxRates);
+      }
     }
-
     return totals;
   }
 
@@ -354,13 +298,12 @@ export default function Home() {
     return `${h}h ${m}m`;
   };
 
-  // Latest 10 lists (newest-first)
-  const recentTimeEntries = useMemo(() => {
-    return [...timeEntries]
-      .sort((a, b) => b.id - a.id)
-      .filter((e) => matchesFilter(projectMap[e.project_id]))
-      .slice(0, 10);
-  }, [timeEntries, filter, projectMap]);
+  const projectColorClass = (name?: string) => {
+    if (name === "AutoVisuals") return "text-pink-500";
+    if (name === "AutoTrac") return "text-blue-500";
+    if (name === "AutoStock") return "text-green-500";
+    return "text-neutral-900 dark:text-neutral-100";
+  };
 
   const recentIncomes = useMemo(() => {
     return [...incomes]
@@ -369,9 +312,41 @@ export default function Home() {
       .slice(0, 10);
   }, [incomes, filter, projectMap]);
 
+  const recentTimeEntries = useMemo(() => {
+    return [...timeEntries]
+      .sort((a, b) => b.id - a.id)
+      .filter((e) => matchesFilter(projectMap[e.project_id]))
+      .slice(0, 10);
+  }, [timeEntries, filter, projectMap]);
+
+  const deleteIncome = async (incomeId: number) => {
+    const yes = window.confirm(`Delete income #${incomeId}?`);
+    if (!yes) return;
+
+    try {
+      await api.delete(`${endpoints.incomes}${incomeId}/`);
+      setIncomes((prev) => prev.filter((i) => i.id !== incomeId));
+    } catch (err) {
+      alert("Failed to delete income.");
+      console.error(err);
+    }
+  };
+
+  const deleteTimeEntry = async (entryId: number) => {
+    const yes = window.confirm(`Delete time entry #${entryId}?`);
+    if (!yes) return;
+
+    try {
+      await api.delete(`${endpoints.timeEntries}${entryId}/`);
+      setTimeEntries((prev) => prev.filter((e) => e.id !== entryId));
+    } catch (err) {
+      alert("Failed to delete time entry.");
+      console.error(err);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
-      {/* FILTER + REFRESH */}
       <div className="flex gap-2 mb-4">
         <select
           value={filter}
@@ -397,10 +372,9 @@ export default function Home() {
         </button>
       </div>
 
-      {/* STACKED BAR CHARTS BY DATE */}
       <FeedCard
         title="Totals overview"
-        subtitle={`Stacked by date (last ${DAYS} days) • Income shown in GBP`}
+        subtitle={`Stacked by date (last ${DAYS} days) • Income in GBP`}
       >
         <div className="space-y-6">
           <div>
@@ -415,21 +389,9 @@ export default function Home() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar
-                    dataKey="AutoVisuals"
-                    stackId="time"
-                    fill={PROJECT_COLORS.AutoVisuals}
-                  />
-                  <Bar
-                    dataKey="AutoTrac"
-                    stackId="time"
-                    fill={PROJECT_COLORS.AutoTrac}
-                  />
-                  <Bar
-                    dataKey="AutoStock"
-                    stackId="time"
-                    fill={PROJECT_COLORS.AutoStock}
-                  />
+                  <Bar dataKey="AutoVisuals" stackId="time" fill={PROJECT_COLORS.AutoVisuals} />
+                  <Bar dataKey="AutoTrac" stackId="time" fill={PROJECT_COLORS.AutoTrac} />
+                  <Bar dataKey="AutoStock" stackId="time" fill={PROJECT_COLORS.AutoStock} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -447,36 +409,16 @@ export default function Home() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar
-                    dataKey="AutoVisuals"
-                    stackId="income"
-                    fill={PROJECT_COLORS.AutoVisuals}
-                  />
-                  <Bar
-                    dataKey="AutoTrac"
-                    stackId="income"
-                    fill={PROJECT_COLORS.AutoTrac}
-                  />
-                  <Bar
-                    dataKey="AutoStock"
-                    stackId="income"
-                    fill={PROJECT_COLORS.AutoStock}
-                  />
+                  <Bar dataKey="AutoVisuals" stackId="income" fill={PROJECT_COLORS.AutoVisuals} />
+                  <Bar dataKey="AutoTrac" stackId="income" fill={PROJECT_COLORS.AutoTrac} />
+                  <Bar dataKey="AutoStock" stackId="income" fill={PROJECT_COLORS.AutoStock} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-
-            {/* Helpful hint if FX still loading */}
-            {Object.keys(fxRates).length <= 1 ? (
-              <div className="text-xs mt-2 text-neutral-500 dark:text-neutral-400">
-                Loading FX rates…
-              </div>
-            ) : null}
           </div>
         </div>
       </FeedCard>
 
-      {/* WEEKLY SUMMARY */}
       <FeedCard title="This week (last 7 days)">
         <ul className="space-y-2 text-sm">
           {FIXED.map((name) => (
@@ -493,21 +435,17 @@ export default function Home() {
                 {name}
               </span>
               <span className="text-xs text-neutral-600 dark:text-neutral-400">
-                ⏱ {fmtHours(weeklyTimeTotals[name])} · 💰 £
-                {weeklyIncomeTotals[name].toFixed(2)}
+                ⏱ {fmtHours(weeklyTimeTotals[name])} · 💰 £{weeklyIncomeTotals[name].toFixed(2)}
               </span>
             </li>
           ))}
         </ul>
       </FeedCard>
 
-      {/* RECENT TIME ENTRIES */}
       <FeedCard title="Recent time entries" subtitle="Latest 10">
         <ul className="space-y-2">
           {recentTimeEntries.map((e) => {
             const pname = projectMap[e.project_id] || `Project #${e.project_id}`;
-            const colorClass = projectColorClass(pname);
-
             return (
               <li
                 key={e.id}
@@ -515,12 +453,11 @@ export default function Home() {
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className={colorClass}>
+                  <div className={projectColorClass(pname)}>
                     {pname} · #{e.id}
                   </div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">
-                    {e.end_time ? "stopped" : "running"} ·{" "}
-                    {new Date(e.start_time).toLocaleString()}
+                    {e.end_time ? "stopped" : "running"} · {new Date(e.start_time).toLocaleString()}
                   </div>
                 </div>
 
@@ -538,14 +475,11 @@ export default function Home() {
         </ul>
       </FeedCard>
 
-      {/* RECENT INCOMES */}
       <FeedCard title="Recent incomes" subtitle="Latest 10 (shows GBP)">
         <ul className="space-y-2">
           {recentIncomes.map((i) => {
             const pname = projectMap[i.project_id] || `Project #${i.project_id}`;
-            const colorClass = projectColorClass(pname);
-
-            const originalCur = (i.currency || "GBP").toUpperCase();
+            const cur = normCur(i.currency);
             const gbp = toGBP(i.amount, i.currency, fxRates);
 
             return (
@@ -555,21 +489,15 @@ export default function Home() {
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className={colorClass}>
+                  <div className={projectColorClass(pname)}>
                     {pname} · #{i.id}
                   </div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">
                     {new Date(i.date).toLocaleDateString()} ·{" "}
-                    {originalCur === "GBP"
+                    {cur === "GBP"
                       ? `£${Number(i.amount).toFixed(2)}`
-                      : `${originalCur} ${Number(i.amount).toFixed(2)}  ≈  £${gbp.toFixed(2)}`}
+                      : `${cur} ${Number(i.amount).toFixed(2)}  ≈  £${gbp.toFixed(2)}`}
                   </div>
-
-                  {i.source ? (
-                    <div className="text-xs text-neutral-700 dark:text-neutral-300 mt-1 break-words">
-                      {i.source}
-                    </div>
-                  ) : null}
                 </div>
 
                 <button
