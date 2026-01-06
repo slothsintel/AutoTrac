@@ -205,12 +205,17 @@ export default function Home() {
       const pname = projectMap[inc.project_id] as FixedProject | undefined;
       if (!pname || !(pname in PROJECT_COLORS)) continue;
 
-      // income.date is already YYYY-MM-DD
-      const dayKey = inc.date;
+      // ✅ Normalize date to YYYY-MM-DD (handles datetime strings)
+      const dayKey = String(inc.date).split("T")[0];
+
       if (!rows.has(dayKey)) continue;
 
-      rows.get(dayKey)![pname] += inc.amount || 0;
+      rows.get(dayKey)![pname] += Number(inc.amount) || 0;
     }
+
+  return Array.from(rows.values());
+}, [incomes, projectMap, lastNDaysKeys]);
+
 
     return Array.from(rows.values());
   }, [incomes, projectMap, lastNDaysKeys]);
