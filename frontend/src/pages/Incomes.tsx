@@ -42,20 +42,26 @@ export default function Incomes() {
   // Fetch incomes + projects, auto-create missing defaults
   // -----------------------------
   useEffect(() => {
-    api.get(endpoints.incomes).then((r) => setIncomes(r.data));
+    api
+      .get(endpoints.incomes)
+      .then((r) => setIncomes(r.data))
+      .catch(console.error);
 
-    api.get(endpoints.projects).then(async (r) => {
-      const existing = r.data as Project[];
-      setProjects(existing);
+    api
+      .get(endpoints.projects)
+      .then(async (r) => {
+        const existing = r.data as Project[];
+        setProjects(existing);
 
-      const existingNames = existing.map((p) => p.name);
-      const missing = FIXED.filter((name) => !existingNames.includes(name));
+        const existingNames = existing.map((p) => p.name);
+        const missing = FIXED.filter((name) => !existingNames.includes(name));
 
-      for (const name of missing) {
-        const res = await api.post(endpoints.projects, { name });
-        setProjects((prev) => [...prev, res.data]);
-      }
-    });
+        for (const name of missing) {
+          const res = await api.post(endpoints.projects, { name });
+          setProjects((prev) => [...prev, res.data]);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   // Map project_id -> name for display
@@ -74,18 +80,39 @@ export default function Incomes() {
       return;
     }
 
-    const res = await api.post(endpoints.incomes, {
-      project_id: project.id,
-      amount: Number(amount),
-      currency,
-      date: new Date().toISOString().slice(0, 10),
-      source,
-    });
+    try {
+      const res = await api.post(endpoints.incomes, {
+        project_id: project.id,
+        amount: Number(amount),
+        currency,
+        date: new Date().toISOString().slice(0, 10),
+        source,
+      });
 
-    setIncomes([res.data, ...incomes]);
-    setAmount("");
-    setSource("");
-    setProjectName("");
+      setIncomes((prev) => [res.data, ...prev]);
+      setAmount("");
+      setSource("");
+      setProjectName("");
+    } catch (err) {
+      alert("Failed to add income.");
+      console.error(err);
+    }
+  };
+
+  // -----------------------------
+  // Delete income
+  // -----------------------------
+  const deleteIncome = async (incomeId: number) => {
+    const yes = window.confirm(`Delete income #${incomeId}?`);
+    if (!yes) return;
+
+    try {
+      await api.delete(`${endpoints.incomes}${incomeId}/`);
+      setIncomes((prev) => prev.filter((i) => i.id !== incomeId));
+    } catch (err) {
+      alert("Failed to delete income. Make sure backend DELETE exists.");
+      console.error(err);
+    }
   };
 
   const formatAmount = (cur: string | undefined, n: number) => {
@@ -179,14 +206,14 @@ export default function Incomes() {
           return (
             <li
               key={i.id}
-              className="bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-xl p-3 flex justify-between"
+              className="bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-xl p-3 flex justify-between items-start gap-3"
             >
-              <div>
+              <div className="min-w-0">
                 <div className="font-medium text-neutral-900 dark:text-neutral-100">
                   {formatAmount(i.currency, i.amount)}
                 </div>
                 <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {i.date}
+                  {i.date} · #{i.id}
                 </div>
                 {pname && (
                   <div
@@ -197,13 +224,21 @@ export default function Incomes() {
                     {pname}
                   </div>
                 )}
+                {i.source && (
+                  <div className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 break-words">
+                    {i.source}
+                  </div>
+                )}
               </div>
 
-              {i.source && (
-                <div className="text-xs text-neutral-600 dark:text-neutral-300">
-                  {i.source}
-                </div>
-              )}
+              <button
+                onClick={() => deleteIncome(i.id)}
+                className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
+                           bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                title="Delete income"
+              >
+                🗑️
+              </button>
             </li>
           );
         })}

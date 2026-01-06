@@ -56,7 +56,6 @@ export default function Home() {
       setIncomes(iRes.data as Income[]);
     } catch (err) {
       console.error("Home loadAll failed:", err);
-      // Keep UI usable; you can add a toast later if you want
     }
   };
 
@@ -65,7 +64,7 @@ export default function Home() {
     loadAll();
   }, []);
 
-  // Reload whenever user returns to the tab/app (mobile + desktop friendly)
+  // Reload whenever user returns to the tab/app
   useEffect(() => {
     const onFocus = () => loadAll();
     const onVis = () => {
@@ -81,7 +80,7 @@ export default function Home() {
     };
   }, []);
 
-  // Map project_id -> project name (memo so it updates correctly)
+  // Map project_id -> name
   const projectMap = useMemo(() => {
     const m: Record<number, string> = {};
     for (const p of projects) m[p.id] = p.name;
@@ -90,6 +89,59 @@ export default function Home() {
 
   const matchesFilter = (projectName?: string) =>
     filter === "All" || (projectName && filter === projectName);
+
+  const projectColorClass = (name?: string) => {
+    if (name === "AutoVisuals") return "text-pink-500";
+    if (name === "AutoTrac") return "text-blue-500";
+    if (name === "AutoStock") return "text-green-500";
+    return "text-neutral-900 dark:text-neutral-100";
+  };
+
+  // -----------------------------
+  // DELETE handlers
+  // -----------------------------
+  const deleteProject = async (projectId: number, projectName?: string) => {
+    const yes = window.confirm(
+      `Delete project "${projectName ?? projectId}"?\n\nThis may also delete its time entries and incomes.`
+    );
+    if (!yes) return;
+
+    try {
+      await api.delete(`${endpoints.projects}${projectId}/`);
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      setLatest((prev) => prev.filter((e) => e.project_id !== projectId));
+      setIncomes((prev) => prev.filter((i) => i.project_id !== projectId));
+    } catch (err) {
+      alert("Failed to delete project.");
+      console.error(err);
+    }
+  };
+
+  const deleteTimeEntry = async (entryId: number) => {
+    const yes = window.confirm(`Delete time entry #${entryId}?`);
+    if (!yes) return;
+
+    try {
+      await api.delete(`${endpoints.timeEntries}${entryId}/`);
+      setLatest((prev) => prev.filter((e) => e.id !== entryId));
+    } catch (err) {
+      alert("Failed to delete time entry.");
+      console.error(err);
+    }
+  };
+
+  const deleteIncome = async (incomeId: number) => {
+    const yes = window.confirm(`Delete income #${incomeId}?`);
+    if (!yes) return;
+
+    try {
+      await api.delete(`${endpoints.incomes}${incomeId}/`);
+      setIncomes((prev) => prev.filter((i) => i.id !== incomeId));
+    } catch (err) {
+      alert("Failed to delete income.");
+      console.error(err);
+    }
+  };
 
   // ---------- TOTALS (all time) ----------
   function calculateTimeTotals(entries: TimeEntry[]) {
@@ -131,7 +183,7 @@ export default function Home() {
   const timeTotals = calculateTimeTotals(latest);
   const incomeTotals = calculateIncomeTotals(incomes);
 
-  // ---------- WEEKLY SUMMARY (last 7 days) ----------
+  // ---------- WEEKLY SUMMARY ----------
   function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
     const totals: Record<FixedProject, number> = {
       AutoVisuals: 0,
@@ -192,30 +244,48 @@ export default function Home() {
     income: incomeTotals[name],
   }));
 
-  const filteredTimeEntries = latest.filter((e) =>
-    matchesFilter(projectMap[e.project_id])
-  );
+  // ✅ NEW: sort newest-first + filter + show latest 10
+  const filteredTimeEntries = useMemo(() => {
+    return [...latest]
+      .sort((a, b) => b.id - a.id)
+      .filter((e) => matchesFilter(projectMap[e.project_id]))
+      .slice(0, 10);
+  }, [latest, filter, projectMap]);
 
-  const filteredIncomes = incomes.filter((i) =>
-    matchesFilter(projectMap[i.project_id])
-  );
+  const filteredIncomes = useMemo(() => {
+    return [...incomes]
+      .sort((a, b) => b.id - a.id)
+      .filter((i) => matchesFilter(projectMap[i.project_id]))
+      .slice(0, 10);
+  }, [incomes, filter, projectMap]);
 
   return (
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
-      {/* FILTER DROPDOWN */}
-      <select
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className="mb-4 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800 
-                   text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700 w-full"
-      >
-        <option value="All">All projects</option>
-        {FIXED.map((p) => (
-          <option key={p} value={p}>
-            {p}
-          </option>
-        ))}
-      </select>
+      {/* FILTER + REFRESH */}
+      <div className="flex gap-2 mb-4">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="flex-1 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800 
+                     text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+        >
+          <option value="All">All projects</option>
+          {FIXED.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={loadAll}
+          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
+                     bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          title="Refresh"
+        >
+          Refresh
+        </button>
+      </div>
 
       {/* TOTALS BAR CHARTS */}
       <FeedCard title="Totals overview">
@@ -295,73 +365,111 @@ export default function Home() {
         </ul>
       </FeedCard>
 
+      {/* PROJECTS */}
       <FeedCard title="Projects" subtitle={`${projects.length} total`}>
-        <ul className="list-disc ml-5">
-          {projects.filter((p) => matchesFilter(p.name)).map((p) => (
-            <li
-              key={p.id}
-              className={
-                p.name === "AutoVisuals"
-                  ? "text-pink-500"
-                  : p.name === "AutoTrac"
-                  ? "text-blue-500"
-                  : p.name === "AutoStock"
-                  ? "text-green-500"
-                  : ""
-              }
-            >
-              {p.name}
-            </li>
-          ))}
+        <ul className="space-y-2">
+          {projects
+            .filter((p) => matchesFilter(p.name))
+            .map((p) => (
+              <li
+                key={p.id}
+                className="flex items-center justify-between gap-3 border border-neutral-200 dark:border-neutral-700
+                           bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className={"font-medium " + projectColorClass(p.name)}>
+                    {p.name}
+                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                    #{p.id}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => deleteProject(p.id, p.name)}
+                  className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
+                             bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  title="Delete project"
+                >
+                  🗑️
+                </button>
+              </li>
+            ))}
         </ul>
       </FeedCard>
 
-      <FeedCard title="Recent time entries">
+      {/* RECENT TIME ENTRIES */}
+      <FeedCard title="Recent time entries" subtitle="Latest 10">
         <ul className="space-y-2">
           {filteredTimeEntries.map((e) => {
             const pname = projectMap[e.project_id] || `Project #${e.project_id}`;
-            const colorClass =
-              pname === "AutoVisuals"
-                ? "text-pink-500"
-                : pname === "AutoTrac"
-                ? "text-blue-500"
-                : pname === "AutoStock"
-                ? "text-green-500"
-                : "text-neutral-900 dark:text-neutral-100";
+            const colorClass = projectColorClass(pname);
 
             return (
-              <li key={e.id} className="flex justify-between">
-                <span className={colorClass}>
-                  {pname} · #{e.id}
-                </span>
-                <span className="text-xs text-neutral-600 dark:text-neutral-400">
-                  {e.end_time ? "stopped" : "running"}
-                </span>
+              <li
+                key={e.id}
+                className="flex items-center justify-between gap-3 border border-neutral-200 dark:border-neutral-700
+                           bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className={colorClass}>
+                    {pname} · #{e.id}
+                  </div>
+                  <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                    {e.end_time ? "stopped" : "running"} ·{" "}
+                    {new Date(e.start_time).toLocaleString()}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => deleteTimeEntry(e.id)}
+                  className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
+                             bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  title="Delete time entry"
+                >
+                  🗑️
+                </button>
               </li>
             );
           })}
         </ul>
       </FeedCard>
 
-      <FeedCard title="Recent incomes">
+      {/* RECENT INCOMES */}
+      <FeedCard title="Recent incomes" subtitle="Latest 10">
         <ul className="space-y-2">
           {filteredIncomes.map((i) => {
             const pname = projectMap[i.project_id] || `Project #${i.project_id}`;
-            const colorClass =
-              pname === "AutoVisuals"
-                ? "text-pink-500"
-                : pname === "AutoTrac"
-                ? "text-blue-500"
-                : pname === "AutoStock"
-                ? "text-green-500"
-                : "text-neutral-900 dark:text-neutral-100";
+            const colorClass = projectColorClass(pname);
 
             return (
-              <li key={i.id} className="flex justify-between">
-                <span className={colorClass}>
-                  {pname} · #{i.id}
-                </span>
-                <span>£{i.amount.toFixed(2)}</span>
+              <li
+                key={i.id}
+                className="flex items-center justify-between gap-3 border border-neutral-200 dark:border-neutral-700
+                           bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className={colorClass}>
+                    {pname} · #{i.id}
+                  </div>
+                  <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                    {i.date} · £{i.amount.toFixed(2)}
+                  </div>
+                  {i.source ? (
+                    <div className="text-xs text-neutral-700 dark:text-neutral-300 mt-1 break-words">
+                      {i.source}
+                    </div>
+                  ) : null}
+                </div>
+
+                <button
+                  onClick={() => deleteIncome(i.id)}
+                  className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
+                             bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  title="Delete income"
+                >
+                  🗑️
+                </button>
               </li>
             );
           })}

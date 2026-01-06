@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api, { endpoints } from "../api";
 
 type Project = { id: number; name: string };
@@ -32,19 +32,38 @@ const FIXED = ["AutoVisuals", "AutoTrac", "AutoStock"] as const;
 export default function Track() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [active, setActive] = useState<TimeEntry | null>(null);
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [selectedName, setSelectedName] = useState<string>("");
   const [note, setNote] = useState("");
 
-  // Load existing projects and current running entry
-  useEffect(() => {
-    api.get(endpoints.projects).then((r) => {
-      setProjects(r.data as Project[]);
-    });
+  const projectMap = useMemo(() => {
+    const m: Record<number, string> = {};
+    for (const p of projects) m[p.id] = p.name;
+    return m;
+  }, [projects]);
 
-    api.get(endpoints.timeEntries).then((r) => {
-      const running = (r.data as TimeEntry[]).find((e) => !e.end_time);
+  const loadAll = async () => {
+    try {
+      const [pRes, tRes] = await Promise.all([
+        api.get(endpoints.projects),
+        api.get(endpoints.timeEntries),
+      ]);
+
+      const p = pRes.data as Project[];
+      const t = tRes.data as TimeEntry[];
+
+      setProjects(p);
+      setEntries(t);
+
+      const running = t.find((e) => !e.end_time);
       setActive(running ?? null);
-    });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadAll();
   }, []);
 
   const isRunning = !!active;
@@ -53,11 +72,9 @@ export default function Track() {
   const ensureProjectByName = async (name: string): Promise<Project | null> => {
     if (!name) return null;
 
-    // Try existing first
     const existing = projects.find((p) => p.name === name);
     if (existing) return existing;
 
-    // Otherwise create it
     try {
       const res = await api.post(endpoints.projects, { name });
       const created = res.data as Project;
@@ -77,22 +94,56 @@ export default function Track() {
     const project = await ensureProjectByName(selectedName);
     if (!project) return;
 
-    const res = await api.post(endpoints.timeEntries, {
-      project_id: project.id,
-      start_time: new Date().toISOString(),
-      note,
-    });
+    try {
+      const res = await api.post(endpoints.timeEntries, {
+        project_id: project.id,
+        start_time: new Date().toISOString(),
+        note,
+      });
 
-    setActive(res.data as TimeEntry);
-    setNote("");
+      const created = res.data as TimeEntry;
+      setActive(created);
+      setEntries((prev) => [created, ...prev]);
+      setNote("");
+    } catch (err) {
+      alert("Failed to start timer.");
+      console.error(err);
+    }
   };
 
   // STOP tracking
   const stop = async () => {
     if (!active) return;
 
-    const res = await api.post(endpoints.stopTimeEntry(active.id));
-    setActive(res.data as TimeEntry);
+    try {
+      const res = await api.post(endpoints.stopTimeEntry(active.id));
+      const updated = res.data as TimeEntry;
+
+      setActive(null);
+      setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+    } catch (err) {
+      alert("Failed to stop timer.");
+      console.error(err);
+    }
+  };
+
+  // DELETE entry
+  const deleteEntry = async (entryId: number) => {
+    if (active?.id === entryId) {
+      alert("Stop the running timer before deleting it.");
+      return;
+    }
+
+    const yes = window.confirm(`Delete time entry #${entryId}?`);
+    if (!yes) return;
+
+    try {
+      await api.delete(`${endpoints.timeEntries}${entryId}/`);
+      setEntries((prev) => prev.filter((e) => e.id !== entryId));
+    } catch (err) {
+      alert("Failed to delete time entry. Make sure backend DELETE exists.");
+      console.error(err);
+    }
   };
 
   return (
@@ -135,7 +186,7 @@ export default function Track() {
         onChange={(e) => setNote(e.target.value)}
         disabled={isRunning}
         className="w-full border border-neutral-200 dark:border-neutral-700 
-                   rounded-xl p-3 mb-6 bg-white dark:bg-neutral-800 
+                   rounded-xl p-3 mb-4 bg-white dark:bg-neutral-800 
                    text-neutral-900 dark:text-neutral-100 min-h-[90px]"
       />
 
@@ -155,6 +206,55 @@ export default function Track() {
           {new Date(active.start_time).toLocaleString()}
         </p>
       )}
+
+      {/* RECENT ENTRIES */}
+      <div className="mt-6 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+          Recent entries
+        </h2>
+        <button
+          onClick={loadAll}
+          className="text-xs px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700
+                     bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <ul className="mt-2 space-y-2">
+        {entries.slice(0, 20).map((e) => {
+          const pname = projectMap[e.project_id] ?? `Project #${e.project_id}`;
+          return (
+            <li
+              key={e.id}
+              className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl p-3
+                         flex items-start justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <div className="font-medium">{pname}</div>
+                <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                  #{e.id} · {new Date(e.start_time).toLocaleString()}
+                  {e.end_time ? ` → ${new Date(e.end_time).toLocaleString()}` : " (running)"}
+                </div>
+                {e.note ? (
+                  <div className="text-xs text-neutral-700 dark:text-neutral-300 mt-1 break-words">
+                    {e.note}
+                  </div>
+                ) : null}
+              </div>
+
+              <button
+                onClick={() => deleteEntry(e.id)}
+                className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
+                           bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                title="Delete time entry"
+              >
+                🗑️
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
