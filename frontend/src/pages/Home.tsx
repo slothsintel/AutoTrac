@@ -213,12 +213,9 @@ export default function Home() {
       rows.get(dayKey)![pname] += Number(inc.amount) || 0;
     }
 
-  return Array.from(rows.values());
-}, [incomes, projectMap, lastNDaysKeys]);
-
-
     return Array.from(rows.values());
   }, [incomes, projectMap, lastNDaysKeys]);
+
 
   // -----------------------------
   // Weekly summary (last 7 days)
