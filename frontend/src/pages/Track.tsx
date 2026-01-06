@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api";
+import api, { endpoints } from "../api";
 
 type Project = { id: number; name: string };
 type TimeEntry = {
@@ -37,11 +37,11 @@ export default function Track() {
 
   // Load existing projects and current running entry
   useEffect(() => {
-    api.get("/projects/").then((r) => {
+    api.get(endpoints.projects).then((r) => {
       setProjects(r.data as Project[]);
     });
 
-    api.get("/time-entries/").then((r) => {
+    api.get(endpoints.timeEntries).then((r) => {
       const running = (r.data as TimeEntry[]).find((e) => !e.end_time);
       setActive(running ?? null);
     });
@@ -59,7 +59,7 @@ export default function Track() {
 
     // Otherwise create it
     try {
-      const res = await api.post("/projects/", { name });
+      const res = await api.post(endpoints.projects, { name });
       const created = res.data as Project;
       setProjects((prev) => [...prev, created]);
       return created;
@@ -77,7 +77,7 @@ export default function Track() {
     const project = await ensureProjectByName(selectedName);
     if (!project) return;
 
-    const res = await api.post("/time-entries/", {
+    const res = await api.post(endpoints.timeEntries, {
       project_id: project.id,
       start_time: new Date().toISOString(),
       note,
@@ -91,7 +91,7 @@ export default function Track() {
   const stop = async () => {
     if (!active) return;
 
-    const res = await api.post(`/time-entries/${active.id}/stop`);
+    const res = await api.post(endpoints.stopTimeEntry(active.id));
     setActive(res.data as TimeEntry);
   };
 

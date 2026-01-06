@@ -1,0 +1,78 @@
+<!-- File: autotrac_hex_multicurrency_bold.svg -->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1024 1024"
+     aria-label="AutoTrac multi-currency income tracking logo">
+
+  <defs>
+    <!-- Hex gradient -->
+    <linearGradient id="hexGrad" x1="160" y1="120" x2="860" y2="900">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+
+    <!-- Income gradient -->
+    <linearGradient id="incomeGrad" x1="300" y1="420" x2="720" y2="820">
+      <stop offset="0%" stop-color="#6EE7B7"/>
+      <stop offset="100%" stop-color="#22C55E"/>
+    </linearGradient>
+
+    <clipPath id="hexClip">
+      <path d="M512 66 L882 279 L882 745 L512 958 L142 745 L142 279 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Hexagon container (only visible background) -->
+  <path d="M512 66 L882 279 L882 745 L512 958 L142 745 L142 279 Z"
+        fill="url(#hexGrad)"/>
+
+  <g clip-path="url(#hexClip)">
+
+    <!-- Clock (time tracking) -->
+    <circle cx="512" cy="360" r="150" fill="#FFFFFF" opacity="0.96"/>
+    <path d="M512 360 L512 290"
+          stroke="#0F172A" stroke-width="22" stroke-linecap="round"/>
+    <path d="M512 360 L585 405"
+          stroke="#0F172A" stroke-width="22" stroke-linecap="round"/>
+    <circle cx="512" cy="360" r="16" fill="url(#incomeGrad)"/>
+
+    <!-- Income bars -->
+    <rect x="300" y="580" width="80" height="160" rx="22" fill="url(#incomeGrad)"/>
+    <rect x="420" y="540" width="80" height="200" rx="22" fill="url(#incomeGrad)"/>
+    <rect x="540" y="600" width="80" height="140" rx="22" fill="url(#incomeGrad)"/>
+    <rect x="660" y="500" width="80" height="240" rx="22" fill="url(#incomeGrad)"/>
+
+    <!-- Currency symbols (large, coloured, balanced) -->
+    <!-- GBP -->
+    <text x="512" y="215"
+          text-anchor="middle"
+          font-size="96"
+          font-weight="800"
+          fill="#2563EB"
+          opacity="0.95">£</text>
+
+    <!-- USD -->
+    <text x="720" y="360"
+          text-anchor="middle"
+          font-size="96"
+          font-weight="800"
+          fill="#16A34A"
+          opacity="0.95">$</text>
+
+    <!-- EUR -->
+    <text x="512" y="545"
+          text-anchor="middle"
+          font-size="96"
+          font-weight="800"
+          fill="#7C3AED"
+          opacity="0.95">€</text>
+
+    <!-- RMB / CNY -->
+    <text x="304" y="360"
+          text-anchor="middle"
+          font-size="96"
+          font-weight="800"
+          fill="#DC2626"
+          opacity="0.95">¥</text>
+
+  </g>
+</svg>

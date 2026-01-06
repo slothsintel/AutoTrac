@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api";
+import api, { endpoints } from "../api";
 
 type Project = { id: number; name: string; description?: string };
 
@@ -26,7 +26,7 @@ export default function Projects() {
 
   // Load existing projects
   useEffect(() => {
-    api.get("/projects/").then((r) => {
+    api.get(endpoints.projects).then((r) => {
       setProjects(r.data as Project[]);
     });
   }, []);
@@ -43,7 +43,7 @@ export default function Projects() {
     }
 
     try {
-      const res = await api.post("/projects/", { name: selectedName });
+      const res = await api.post(endpoints.projects, { name: selectedName });
       const created = res.data as Project;
       setProjects((prev) => [created, ...prev]);
       setSelectedName("");

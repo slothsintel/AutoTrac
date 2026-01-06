@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api";
+import api, { endpoints } from "../api";
 import FeedCard from "../components/FeedCard";
 import {
   BarChart,
@@ -33,8 +33,8 @@ type FixedProject = (typeof FIXED)[number];
 
 const PROJECT_COLORS: Record<FixedProject, string> = {
   AutoVisuals: "#ec4899", // pink-500
-  AutoTrac: "#3b82f6",    // blue-500
-  AutoStock: "#22c55e",   // green-500
+  AutoTrac: "#3b82f6", // blue-500
+  AutoStock: "#22c55e", // green-500
 };
 
 export default function Home() {
@@ -44,9 +44,9 @@ export default function Home() {
   const [filter, setFilter] = useState<string>("All");
 
   useEffect(() => {
-    api.get("/projects/").then((r) => setProjects(r.data));
-    api.get("/time-entries/").then((r) => setLatest(r.data));
-    api.get("/incomes/").then((r) => setIncomes(r.data));
+    api.get(endpoints.projects).then((r) => setProjects(r.data));
+    api.get(endpoints.timeEntries).then((r) => setLatest(r.data));
+    api.get(endpoints.incomes).then((r) => setIncomes(r.data));
   }, []);
 
   // Map project_id -> project name
@@ -68,8 +68,7 @@ export default function Home() {
     for (const e of entries) {
       if (!e.end_time) continue;
       const durationSec =
-        (new Date(e.end_time).getTime() -
-          new Date(e.start_time).getTime()) /
+        (new Date(e.end_time).getTime() - new Date(e.start_time).getTime()) /
         1000;
 
       const name = projectMap[e.project_id] as FixedProject | undefined;
@@ -118,8 +117,7 @@ export default function Home() {
       const start = new Date(e.start_time).getTime();
       if (start < sevenDaysAgo) continue;
 
-      const durationSec =
-        (new Date(e.end_time).getTime() - start) / 1000;
+      const durationSec = (new Date(e.end_time).getTime() - start) / 1000;
       const name = projectMap[e.project_id] as FixedProject | undefined;
       if (name && totals[name] != null) {
         totals[name] += durationSec;
@@ -212,9 +210,7 @@ export default function Home() {
                     {perProjectChartData.map((row, idx) => (
                       <Cell
                         key={idx}
-                        fill={
-                          PROJECT_COLORS[row.name as FixedProject]
-                        }
+                        fill={PROJECT_COLORS[row.name as FixedProject]}
                       />
                     ))}
                   </Bar>
@@ -239,9 +235,7 @@ export default function Home() {
                     {perProjectChartData.map((row, idx) => (
                       <Cell
                         key={idx}
-                        fill={
-                          PROJECT_COLORS[row.name as FixedProject]
-                        }
+                        fill={PROJECT_COLORS[row.name as FixedProject]}
                       />
                     ))}
                   </Bar>

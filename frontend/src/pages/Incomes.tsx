@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api";
+import api, { endpoints } from "../api";
 
 type Income = {
   id: number;
@@ -42,9 +42,9 @@ export default function Incomes() {
   // Fetch incomes + projects, auto-create missing defaults
   // -----------------------------
   useEffect(() => {
-    api.get("/incomes/").then((r) => setIncomes(r.data));
+    api.get(endpoints.incomes).then((r) => setIncomes(r.data));
 
-    api.get("/projects/").then(async (r) => {
+    api.get(endpoints.projects).then(async (r) => {
       const existing = r.data as Project[];
       setProjects(existing);
 
@@ -52,7 +52,7 @@ export default function Incomes() {
       const missing = FIXED.filter((name) => !existingNames.includes(name));
 
       for (const name of missing) {
-        const res = await api.post("/projects/", { name });
+        const res = await api.post(endpoints.projects, { name });
         setProjects((prev) => [...prev, res.data]);
       }
     });
@@ -74,7 +74,7 @@ export default function Incomes() {
       return;
     }
 
-    const res = await api.post("/incomes/", {
+    const res = await api.post(endpoints.incomes, {
       project_id: project.id,
       amount: Number(amount),
       currency,
@@ -191,8 +191,7 @@ export default function Incomes() {
                 {pname && (
                   <div
                     className={
-                      "text-xs mt-1 font-medium " +
-                      projectColorClass(pname)
+                      "text-xs mt-1 font-medium " + projectColorClass(pname)
                     }
                   >
                     {pname}
