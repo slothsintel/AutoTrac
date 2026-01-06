@@ -12,33 +12,16 @@ type Income = {
 
 type Project = { id: number; name: string };
 
-const MoneyIcon = (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="3" y="6" width="18" height="12" rx="2" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-
-// --------------------
-// FX (client-side GBP conversion)
-// --------------------
 type FxRates = Record<string, number>;
 const FX_TTL_MS = 12 * 60 * 60 * 1000;
-
 const fxKey = (cur: string) => `fx_${cur.toUpperCase()}_GBP`;
 
+function normCur(c?: string | null) {
+  return (c || "GBP").toUpperCase();
+}
+
 async function fetchRateToGBP(curRaw: string): Promise<number> {
-  const cur = (curRaw || "GBP").toUpperCase();
+  const cur = normCur(curRaw);
   if (cur === "GBP") return 1;
 
   try {
@@ -58,11 +41,9 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
     // ignore
   }
 
-  const url = `https://api.exchangerate.host/latest?base=${encodeURIComponent(
-    cur
-  )}&symbols=GBP`;
-
-  const res = await fetch(url);
+  const res = await fetch(
+    `https://api.exchangerate.host/latest?base=${encodeURIComponent(cur)}&symbols=GBP`
+  );
   if (!res.ok) throw new Error(`FX fetch failed: ${res.status}`);
   const data = await res.json();
 
@@ -78,29 +59,34 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
   return rate;
 }
 
-function normCur(c?: string | null) {
-  // ✅ IMPORTANT: default missing currency to GBP (not USD)
-  return (c || "GBP").toUpperCase();
-}
-
 function toGBP(amount: number, currency?: string | null, rates?: FxRates): number {
   const cur = normCur(currency);
   if (cur === "GBP") return Number(amount) || 0;
   const r = rates?.[cur];
-  if (!r) return Number(amount) || 0; // fallback: show original numeric if rate not ready
+  if (!r) return 0; // show 0 until rate arrives (prevents wrong values)
   return (Number(amount) || 0) * r;
+}
+
+function formatMoney(curRaw: string | null | undefined, amtRaw: number) {
+  const c = normCur(curRaw);
+  const v = Number(amtRaw) || 0;
+  if (c === "GBP") return `£${v.toFixed(2)}`;
+  if (c === "USD") return `$${v.toFixed(2)}`;
+  if (c === "EUR") return `€${v.toFixed(2)}`;
+  if (c === "HKD") return `HK$${v.toFixed(2)}`;
+  if (c === "RMB" || c === "CNY") return `¥${v.toFixed(2)}`;
+  return `${c} ${v.toFixed(2)}`;
 }
 
 export default function Incomes() {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
   const [projectId, setProjectId] = useState<number | "">("");
-  const [currency, setCurrency] = useState<string>("GBP");
+  const [currency, setCurrency] = useState<string>("USD"); // default USD is fine
   const [amount, setAmount] = useState<string>("");
   const [source, setSource] = useState<string>("");
-
-  const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
   const projectMap = useMemo(() => {
     const m: Record<number, string> = {};
@@ -108,51 +94,27 @@ export default function Incomes() {
     return m;
   }, [projects]);
 
-  const projectColorClass = (name?: string) => {
-    if (name === "AutoVisuals") return "text-pink-500";
-    if (name === "AutoTrac") return "text-blue-500";
-    if (name === "AutoStock") return "text-green-500";
-    return "text-neutral-900 dark:text-neutral-100";
-  };
-
-  const formatAmount = (curRaw?: string | null, amtRaw?: number) => {
-    const c = normCur(curRaw);
-    const v = Number(amtRaw) || 0;
-
-    if (c === "GBP") return `£${v.toFixed(2)}`;
-    if (c === "USD") return `$${v.toFixed(2)}`;
-    if (c === "EUR") return `€${v.toFixed(2)}`;
-    if (c === "HKD") return `HK$${v.toFixed(2)}`;
-    if (c === "RMB" || c === "CNY") return `¥${v.toFixed(2)}`;
-    return `${c} ${v.toFixed(2)}`;
-  };
-
   const load = async () => {
-    try {
-      const [pRes, iRes] = await Promise.all([
-        api.get(endpoints.projects),
-        api.get(endpoints.incomes),
-      ]);
-      setProjects(pRes.data as Project[]);
-      setIncomes(iRes.data as Income[]);
-    } catch (e) {
-      console.error("Incomes load failed:", e);
-    }
+    const [pRes, iRes] = await Promise.all([
+      api.get(endpoints.projects),
+      api.get(endpoints.incomes),
+    ]);
+    setProjects(pRes.data as Project[]);
+    setIncomes(iRes.data as Income[]);
   };
 
   useEffect(() => {
-    load();
+    load().catch(console.error);
   }, []);
 
-  // FX: load missing currencies from incomes list
+  // load FX rates for any currencies used in list OR selected in input
   useEffect(() => {
     let cancelled = false;
+    const currencies = new Set<string>();
+    currencies.add(normCur(currency));
+    for (const i of incomes) currencies.add(normCur(i.currency));
 
-    const currencies = Array.from(
-      new Set((incomes || []).map((i) => normCur(i.currency)))
-    );
-
-    const missing = currencies.filter((c) => c !== "GBP" && !fxRates[c]);
+    const missing = [...currencies].filter((c) => c !== "GBP" && !fxRates[c]);
     if (missing.length === 0) return;
 
     (async () => {
@@ -161,7 +123,6 @@ export default function Incomes() {
           missing.map(async (c) => [c, await fetchRateToGBP(c)] as const)
         );
         if (cancelled) return;
-
         setFxRates((prev) => {
           const next = { ...prev };
           for (const [c, r] of pairs) next[c] = r;
@@ -176,7 +137,7 @@ export default function Incomes() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [incomes]);
+  }, [incomes, currency]);
 
   const inputGBP = useMemo(() => {
     const amt = Number(amount) || 0;
@@ -190,45 +151,35 @@ export default function Incomes() {
 
     const cur = normCur(currency);
 
-    try {
-      await api.post(endpoints.incomes, {
-        project_id: projectId,
-        date: new Date().toISOString().split("T")[0],
-        amount: amt,
-        currency: cur, // ✅ always send currency explicitly
-        source: source || null,
-      });
+    // ✅ IMPORTANT:
+    // We store what the user entered in the selected currency (USD stays USD).
+    // Conversion is for display + analytics (GBP).
+    await api.post(endpoints.incomes, {
+      project_id: projectId,
+      date: new Date().toISOString().split("T")[0],
+      amount: amt,
+      currency: cur,
+      source: source || null,
+    });
 
-      setAmount("");
-      setSource("");
-      await load();
-    } catch (e) {
-      console.error(e);
-      alert("Failed to add income. Check backend.");
-    }
+    setAmount("");
+    setSource("");
+    await load();
   };
 
   const deleteIncome = async (id: number) => {
     const yes = window.confirm(`Delete income #${id}?`);
     if (!yes) return;
-
-    try {
-      await api.delete(`${endpoints.incomes}${id}/`);
-      setIncomes((prev) => prev.filter((x) => x.id !== id));
-    } catch (e) {
-      console.error(e);
-      alert("Delete failed. (Backend must support DELETE /incomes/{id}/)");
-    }
+    await api.delete(`${endpoints.incomes}${id}/`);
+    setIncomes((prev) => prev.filter((x) => x.id !== id));
   };
 
   return (
     <div className="mx-auto max-w-md px-3 py-4">
       <div className="flex items-center gap-2 mb-3 text-neutral-900 dark:text-neutral-100">
-        <span className="text-neutral-700 dark:text-neutral-300">{MoneyIcon}</span>
         <h1 className="text-lg font-semibold">Incomes</h1>
       </div>
 
-      {/* Form */}
       <div className="space-y-3 mb-6">
         <select
           className="w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border rounded-xl p-2"
@@ -295,9 +246,9 @@ export default function Incomes() {
           .slice()
           .sort((a, b) => b.id - a.id)
           .map((i) => {
-            const pname = projectMap[i.project_id];
             const cur = normCur(i.currency);
             const gbp = toGBP(i.amount, i.currency, fxRates);
+            const pname = projectMap[i.project_id] || `Project #${i.project_id}`;
 
             return (
               <li
@@ -306,10 +257,9 @@ export default function Incomes() {
               >
                 <div className="min-w-0">
                   <div className="font-medium text-neutral-900 dark:text-neutral-100">
-                    {formatAmount(i.currency, i.amount)}
+                    {formatMoney(i.currency, i.amount)}
                   </div>
 
-                  {/* ✅ always show GBP line, unless it's already GBP */}
                   {cur !== "GBP" ? (
                     <div className="text-xs text-neutral-600 dark:text-neutral-400">
                       ≈ £{gbp.toFixed(2)}
@@ -320,17 +270,9 @@ export default function Incomes() {
                     {new Date(i.date).toLocaleString()} · #{i.id}
                   </div>
 
-                  {pname ? (
-                    <div className={"text-xs mt-1 font-medium " + projectColorClass(pname)}>
-                      {pname}
-                    </div>
-                  ) : null}
-
-                  {i.source ? (
-                    <div className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 break-words">
-                      {i.source}
-                    </div>
-                  ) : null}
+                  <div className="text-xs mt-1 font-medium text-neutral-700 dark:text-neutral-300">
+                    {pname}
+                  </div>
                 </div>
 
                 <button
@@ -345,12 +287,6 @@ export default function Incomes() {
             );
           })}
       </ul>
-
-      {Object.keys(fxRates).length <= 1 ? (
-        <div className="text-xs mt-3 text-neutral-500 dark:text-neutral-400">
-          Loading FX rates…
-        </div>
-      ) : null}
     </div>
   );
 }
