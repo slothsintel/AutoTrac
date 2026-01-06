@@ -12,6 +12,7 @@ import {
 } from "recharts";
 
 type Project = { id: number; name: string };
+
 type TimeEntry = {
   id: number;
   project_id: number;
@@ -19,12 +20,13 @@ type TimeEntry = {
   end_time: string | null;
   note?: string;
 };
+
 type Income = {
   id: number;
   project_id: number;
-  date: string;
+  date: string; // may be "YYYY-MM-DD" OR full datetime string
   amount: number;
-  currency?: string;
+  currency?: string; // GBP, USD, HKD, EUR, RMB...
   source?: string;
 };
 
@@ -37,14 +39,72 @@ const PROJECT_COLORS: Record<FixedProject, string> = {
   AutoStock: "#22c55e",
 };
 
-// Stacked-by-date chart window
-const DAYS = 30; // change to 30 if you want
+const DAYS = 30;
 
+// --------------------
+// FX (client-side GBP conversion)
+// --------------------
+type FxRates = Record<string, number>;
+const FX_TTL_MS = 12 * 60 * 60 * 1000;
+
+const fxKey = (cur: string) => `fx_${cur.toUpperCase()}_GBP`;
+
+async function fetchRateToGBP(curRaw: string): Promise<number> {
+  const cur = (curRaw || "GBP").toUpperCase();
+  if (cur === "GBP") return 1;
+
+  // localStorage cache
+  try {
+    const cached = localStorage.getItem(fxKey(cur));
+    if (cached) {
+      const parsed = JSON.parse(cached) as { rate: number; ts: number };
+      if (
+        parsed &&
+        Number.isFinite(parsed.rate) &&
+        parsed.rate > 0 &&
+        Date.now() - parsed.ts < FX_TTL_MS
+      ) {
+        return parsed.rate;
+      }
+    }
+  } catch {
+    // ignore cache errors
+  }
+
+  // fetch live rate (no key)
+  const url = `https://api.exchangerate.host/latest?base=${encodeURIComponent(
+    cur
+  )}&symbols=GBP`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`FX fetch failed: ${res.status}`);
+  const data = await res.json();
+  const rate = Number(data?.rates?.GBP);
+  if (!Number.isFinite(rate) || rate <= 0) throw new Error("Bad FX rate");
+
+  try {
+    localStorage.setItem(fxKey(cur), JSON.stringify({ rate, ts: Date.now() }));
+  } catch {
+    // ignore
+  }
+  return rate;
+}
+
+function toGBP(amount: number, currency?: string, rates?: FxRates): number {
+  const cur = (currency || "GBP").toUpperCase();
+  if (cur === "GBP") return Number(amount) || 0;
+  const r = rates?.[cur];
+  if (!r) return 0; // will render 0 until rates arrive
+  return (Number(amount) || 0) * r;
+}
+
+// --------------------
+// Date helpers
+// --------------------
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const toDayKey = (d: Date) =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
-const makeLastNDaysKeys = (n: number) => {
+function makeLastNDaysKeys(n: number) {
   const keys: string[] = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -54,7 +114,7 @@ const makeLastNDaysKeys = (n: number) => {
     keys.push(toDayKey(d));
   }
   return keys;
-};
+}
 
 type DailyRow = { date: string } & Record<FixedProject, number>;
 const emptyDailyRow = (date: string): DailyRow => ({
@@ -66,9 +126,11 @@ const emptyDailyRow = (date: string): DailyRow => ({
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [latest, setLatest] = useState<TimeEntry[]>([]);
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [filter, setFilter] = useState<string>("All");
+
+  const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
   const loadAll = async () => {
     try {
@@ -79,35 +141,33 @@ export default function Home() {
       ]);
 
       setProjects(pRes.data as Project[]);
-      setLatest(tRes.data as TimeEntry[]);
+      setTimeEntries(tRes.data as TimeEntry[]);
       setIncomes(iRes.data as Income[]);
     } catch (err) {
       console.error("Home loadAll failed:", err);
     }
   };
 
-  // Load once
+  // initial load
   useEffect(() => {
     loadAll();
   }, []);
 
-  // Reload whenever user returns to the tab/app
+  // refresh on focus/visibility
   useEffect(() => {
     const onFocus = () => loadAll();
     const onVis = () => {
       if (!document.hidden) loadAll();
     };
-
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
-
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
 
-  // Map project_id -> project name
+  // map project_id -> name
   const projectMap = useMemo(() => {
     const m: Record<number, string> = {};
     for (const p of projects) m[p.id] = p.name;
@@ -124,33 +184,52 @@ export default function Home() {
     return "text-neutral-900 dark:text-neutral-100";
   };
 
-  // -----------------------------
-  // Delete handlers
-  // -----------------------------
-  const deleteProject = async (projectId: number, projectName?: string) => {
-    const yes = window.confirm(
-      `Delete project "${projectName ?? projectId}"?\n\nThis may also delete its time entries and incomes.`
+  // --------------------
+  // FX: load missing currencies seen in incomes
+  // --------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    const currencies = Array.from(
+      new Set((incomes || []).map((i) => (i.currency || "GBP").toUpperCase()))
     );
-    if (!yes) return;
 
-    try {
-      await api.delete(`${endpoints.projects}${projectId}/`);
-      setProjects((prev) => prev.filter((p) => p.id !== projectId));
-      setLatest((prev) => prev.filter((e) => e.project_id !== projectId));
-      setIncomes((prev) => prev.filter((i) => i.project_id !== projectId));
-    } catch (err) {
-      alert("Failed to delete project.");
-      console.error(err);
-    }
-  };
+    const missing = currencies.filter((c) => c !== "GBP" && !fxRates[c]);
+    if (missing.length === 0) return;
 
+    (async () => {
+      try {
+        const pairs = await Promise.all(
+          missing.map(async (c) => [c, await fetchRateToGBP(c)] as const)
+        );
+        if (cancelled) return;
+
+        setFxRates((prev) => {
+          const next = { ...prev };
+          for (const [c, r] of pairs) next[c] = r;
+          return next;
+        });
+      } catch (e) {
+        console.error("FX load failed:", e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomes]);
+
+  // --------------------
+  // Delete handlers (optional, if your backend supports these DELETE endpoints)
+  // --------------------
   const deleteTimeEntry = async (entryId: number) => {
     const yes = window.confirm(`Delete time entry #${entryId}?`);
     if (!yes) return;
 
     try {
       await api.delete(`${endpoints.timeEntries}${entryId}/`);
-      setLatest((prev) => prev.filter((e) => e.id !== entryId));
+      setTimeEntries((prev) => prev.filter((e) => e.id !== entryId));
     } catch (err) {
       alert("Failed to delete time entry.");
       console.error(err);
@@ -170,16 +249,16 @@ export default function Home() {
     }
   };
 
-  // -----------------------------
-  // Stacked by date chart data
-  // -----------------------------
+  // --------------------
+  // Stacked-by-date data (last N days)
+  // --------------------
   const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
 
   const dailyTimeData: DailyRow[] = useMemo(() => {
     const rows = new Map<string, DailyRow>();
     for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day));
 
-    for (const e of latest) {
+    for (const e of timeEntries) {
       if (!e.end_time) continue;
 
       const pname = projectMap[e.project_id] as FixedProject | undefined;
@@ -187,7 +266,8 @@ export default function Home() {
 
       const start = new Date(e.start_time);
       const end = new Date(e.end_time);
-      const dayKey = toDayKey(start);
+
+      const dayKey = toDayKey(start); // start-date attribution
       if (!rows.has(dayKey)) continue;
 
       const durationHours = (end.getTime() - start.getTime()) / 1000 / 3600;
@@ -195,7 +275,7 @@ export default function Home() {
     }
 
     return Array.from(rows.values());
-  }, [latest, projectMap, lastNDaysKeys]);
+  }, [timeEntries, projectMap, lastNDaysKeys]);
 
   const dailyIncomeData: DailyRow[] = useMemo(() => {
     const rows = new Map<string, DailyRow>();
@@ -205,21 +285,20 @@ export default function Home() {
       const pname = projectMap[inc.project_id] as FixedProject | undefined;
       if (!pname || !(pname in PROJECT_COLORS)) continue;
 
-      // ✅ Normalize date to YYYY-MM-DD (handles datetime strings)
-      const dayKey = String(inc.date).split("T")[0];
-
+      // ✅ Robust: works for "YYYY-MM-DD" OR datetime strings
+      const dayKey = toDayKey(new Date(inc.date));
       if (!rows.has(dayKey)) continue;
 
-      rows.get(dayKey)![pname] += Number(inc.amount) || 0;
+      // ✅ Convert to GBP for charts
+      rows.get(dayKey)![pname] += toGBP(inc.amount, inc.currency, fxRates);
     }
 
     return Array.from(rows.values());
-  }, [incomes, projectMap, lastNDaysKeys]);
+  }, [incomes, projectMap, lastNDaysKeys, fxRates]);
 
-
-  // -----------------------------
+  // --------------------
   // Weekly summary (last 7 days)
-  // -----------------------------
+  // --------------------
   function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
     const totals: Record<FixedProject, number> = {
       AutoVisuals: 0,
@@ -259,13 +338,14 @@ export default function Home() {
       if (d < sevenDaysAgo) continue;
 
       const name = projectMap[inc.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) totals[name] += inc.amount;
+      if (name && totals[name] != null)
+        totals[name] += toGBP(inc.amount, inc.currency, fxRates);
     }
 
     return totals;
   }
 
-  const weeklyTimeTotals = calculateWeeklyTimeTotals(latest);
+  const weeklyTimeTotals = calculateWeeklyTimeTotals(timeEntries);
   const weeklyIncomeTotals = calculateWeeklyIncomeTotals(incomes);
 
   const fmtHours = (sec: number) => {
@@ -275,14 +355,14 @@ export default function Home() {
   };
 
   // Latest 10 lists (newest-first)
-  const filteredTimeEntries = useMemo(() => {
-    return [...latest]
+  const recentTimeEntries = useMemo(() => {
+    return [...timeEntries]
       .sort((a, b) => b.id - a.id)
       .filter((e) => matchesFilter(projectMap[e.project_id]))
       .slice(0, 10);
-  }, [latest, filter, projectMap]);
+  }, [timeEntries, filter, projectMap]);
 
-  const filteredIncomes = useMemo(() => {
+  const recentIncomes = useMemo(() => {
     return [...incomes]
       .sort((a, b) => b.id - a.id)
       .filter((i) => matchesFilter(projectMap[i.project_id]))
@@ -320,7 +400,7 @@ export default function Home() {
       {/* STACKED BAR CHARTS BY DATE */}
       <FeedCard
         title="Totals overview"
-        subtitle={`Stacked by date (last ${DAYS} days)`}
+        subtitle={`Stacked by date (last ${DAYS} days) • Income shown in GBP`}
       >
         <div className="space-y-6">
           <div>
@@ -357,7 +437,7 @@ export default function Home() {
 
           <div>
             <p className="text-xs mb-1 text-neutral-600 dark:text-neutral-400">
-              Daily income (£) — stacked by project
+              Daily income (£) — stacked by project (auto FX)
             </p>
 
             <div className="h-56">
@@ -385,6 +465,13 @@ export default function Home() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+
+            {/* Helpful hint if FX still loading */}
+            {Object.keys(fxRates).length <= 1 ? (
+              <div className="text-xs mt-2 text-neutral-500 dark:text-neutral-400">
+                Loading FX rates…
+              </div>
+            ) : null}
           </div>
         </div>
       </FeedCard>
@@ -414,43 +501,10 @@ export default function Home() {
         </ul>
       </FeedCard>
 
-      {/* PROJECTS */}
-      <FeedCard title="Projects" subtitle={`${projects.length} total`}>
-        <ul className="space-y-2">
-          {projects
-            .filter((p) => matchesFilter(p.name))
-            .map((p) => (
-              <li
-                key={p.id}
-                className="flex items-center justify-between gap-3 border border-neutral-200 dark:border-neutral-700
-                           bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <div className={"font-medium " + projectColorClass(p.name)}>
-                    {p.name}
-                  </div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                    #{p.id}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => deleteProject(p.id, p.name)}
-                  className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
-                             bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  title="Delete project"
-                >
-                  🗑️
-                </button>
-              </li>
-            ))}
-        </ul>
-      </FeedCard>
-
       {/* RECENT TIME ENTRIES */}
       <FeedCard title="Recent time entries" subtitle="Latest 10">
         <ul className="space-y-2">
-          {filteredTimeEntries.map((e) => {
+          {recentTimeEntries.map((e) => {
             const pname = projectMap[e.project_id] || `Project #${e.project_id}`;
             const colorClass = projectColorClass(pname);
 
@@ -485,11 +539,14 @@ export default function Home() {
       </FeedCard>
 
       {/* RECENT INCOMES */}
-      <FeedCard title="Recent incomes" subtitle="Latest 10">
+      <FeedCard title="Recent incomes" subtitle="Latest 10 (shows GBP)">
         <ul className="space-y-2">
-          {filteredIncomes.map((i) => {
+          {recentIncomes.map((i) => {
             const pname = projectMap[i.project_id] || `Project #${i.project_id}`;
             const colorClass = projectColorClass(pname);
+
+            const originalCur = (i.currency || "GBP").toUpperCase();
+            const gbp = toGBP(i.amount, i.currency, fxRates);
 
             return (
               <li
@@ -502,8 +559,12 @@ export default function Home() {
                     {pname} · #{i.id}
                   </div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">
-                    {i.date} · £{i.amount.toFixed(2)}
+                    {new Date(i.date).toLocaleDateString()} ·{" "}
+                    {originalCur === "GBP"
+                      ? `£${Number(i.amount).toFixed(2)}`
+                      : `${originalCur} ${Number(i.amount).toFixed(2)}  ≈  £${gbp.toFixed(2)}`}
                   </div>
+
                   {i.source ? (
                     <div className="text-xs text-neutral-700 dark:text-neutral-300 mt-1 break-words">
                       {i.source}
