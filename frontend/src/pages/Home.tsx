@@ -9,7 +9,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  Cell,
 } from "recharts";
 
 type Project = { id: number; name: string };
@@ -18,6 +17,7 @@ type TimeEntry = {
   project_id: number;
   start_time: string;
   end_time: string | null;
+  note?: string;
 };
 type Income = {
   id: number;
@@ -36,6 +36,33 @@ const PROJECT_COLORS: Record<FixedProject, string> = {
   AutoTrac: "#3b82f6",
   AutoStock: "#22c55e",
 };
+
+// Stacked-by-date chart window
+const DAYS = 30; // change to 30 if you want
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const toDayKey = (d: Date) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+const makeLastNDaysKeys = (n: number) => {
+  const keys: string[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    keys.push(toDayKey(d));
+  }
+  return keys;
+};
+
+type DailyRow = { date: string } & Record<FixedProject, number>;
+const emptyDailyRow = (date: string): DailyRow => ({
+  date,
+  AutoVisuals: 0,
+  AutoTrac: 0,
+  AutoStock: 0,
+});
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -80,7 +107,7 @@ export default function Home() {
     };
   }, []);
 
-  // Map project_id -> name
+  // Map project_id -> project name
   const projectMap = useMemo(() => {
     const m: Record<number, string> = {};
     for (const p of projects) m[p.id] = p.name;
@@ -98,7 +125,7 @@ export default function Home() {
   };
 
   // -----------------------------
-  // DELETE handlers
+  // Delete handlers
   // -----------------------------
   const deleteProject = async (projectId: number, projectName?: string) => {
     const yes = window.confirm(
@@ -143,47 +170,54 @@ export default function Home() {
     }
   };
 
-  // ---------- TOTALS (all time) ----------
-  function calculateTimeTotals(entries: TimeEntry[]) {
-    const totals: Record<FixedProject, number> = {
-      AutoVisuals: 0,
-      AutoTrac: 0,
-      AutoStock: 0,
-    };
+  // -----------------------------
+  // Stacked by date chart data
+  // -----------------------------
+  const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
 
-    for (const e of entries) {
+  const dailyTimeData: DailyRow[] = useMemo(() => {
+    const rows = new Map<string, DailyRow>();
+    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day));
+
+    for (const e of latest) {
       if (!e.end_time) continue;
 
-      const durationSec =
-        (new Date(e.end_time).getTime() - new Date(e.start_time).getTime()) /
-        1000;
+      const pname = projectMap[e.project_id] as FixedProject | undefined;
+      if (!pname || !(pname in PROJECT_COLORS)) continue;
 
-      const name = projectMap[e.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) totals[name] += durationSec;
+      const start = new Date(e.start_time);
+      const end = new Date(e.end_time);
+      const dayKey = toDayKey(start);
+      if (!rows.has(dayKey)) continue;
+
+      const durationHours = (end.getTime() - start.getTime()) / 1000 / 3600;
+      rows.get(dayKey)![pname] += Math.max(0, durationHours);
     }
 
-    return totals;
-  }
+    return Array.from(rows.values());
+  }, [latest, projectMap, lastNDaysKeys]);
 
-  function calculateIncomeTotals(list: Income[]) {
-    const totals: Record<FixedProject, number> = {
-      AutoVisuals: 0,
-      AutoTrac: 0,
-      AutoStock: 0,
-    };
+  const dailyIncomeData: DailyRow[] = useMemo(() => {
+    const rows = new Map<string, DailyRow>();
+    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day));
 
-    for (const inc of list) {
-      const name = projectMap[inc.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) totals[name] += inc.amount;
+    for (const inc of incomes) {
+      const pname = projectMap[inc.project_id] as FixedProject | undefined;
+      if (!pname || !(pname in PROJECT_COLORS)) continue;
+
+      // income.date is already YYYY-MM-DD
+      const dayKey = inc.date;
+      if (!rows.has(dayKey)) continue;
+
+      rows.get(dayKey)![pname] += inc.amount || 0;
     }
 
-    return totals;
-  }
+    return Array.from(rows.values());
+  }, [incomes, projectMap, lastNDaysKeys]);
 
-  const timeTotals = calculateTimeTotals(latest);
-  const incomeTotals = calculateIncomeTotals(incomes);
-
-  // ---------- WEEKLY SUMMARY ----------
+  // -----------------------------
+  // Weekly summary (last 7 days)
+  // -----------------------------
   function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
     const totals: Record<FixedProject, number> = {
       AutoVisuals: 0,
@@ -238,13 +272,7 @@ export default function Home() {
     return `${h}h ${m}m`;
   };
 
-  const perProjectChartData = FIXED.map((name) => ({
-    name,
-    hours: timeTotals[name] / 3600,
-    income: incomeTotals[name],
-  }));
-
-  // ✅ NEW: sort newest-first + filter + show latest 10
+  // Latest 10 lists (newest-first)
   const filteredTimeEntries = useMemo(() => {
     return [...latest]
       .sort((a, b) => b.id - a.id)
@@ -287,28 +315,39 @@ export default function Home() {
         </button>
       </div>
 
-      {/* TOTALS BAR CHARTS */}
-      <FeedCard title="Totals overview">
-        <div className="space-y-4">
+      {/* STACKED BAR CHARTS BY DATE */}
+      <FeedCard
+        title="Totals overview"
+        subtitle={`Stacked by date (last ${DAYS} days)`}
+      >
+        <div className="space-y-6">
           <div>
             <p className="text-xs mb-1 text-neutral-600 dark:text-neutral-400">
-              Total time (hours) per project
+              Daily time (hours) — stacked by project
             </p>
-            <div className="h-48">
+
+            <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={perProjectChartData}>
-                  <XAxis dataKey="name" />
+                <BarChart data={dailyTimeData}>
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="hours" name="Hours">
-                    {perProjectChartData.map((row, idx) => (
-                      <Cell
-                        key={idx}
-                        fill={PROJECT_COLORS[row.name as FixedProject]}
-                      />
-                    ))}
-                  </Bar>
+                  <Bar
+                    dataKey="AutoVisuals"
+                    stackId="time"
+                    fill={PROJECT_COLORS.AutoVisuals}
+                  />
+                  <Bar
+                    dataKey="AutoTrac"
+                    stackId="time"
+                    fill={PROJECT_COLORS.AutoTrac}
+                  />
+                  <Bar
+                    dataKey="AutoStock"
+                    stackId="time"
+                    fill={PROJECT_COLORS.AutoStock}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -316,23 +355,31 @@ export default function Home() {
 
           <div>
             <p className="text-xs mb-1 text-neutral-600 dark:text-neutral-400">
-              Total income (£) per project
+              Daily income (£) — stacked by project
             </p>
-            <div className="h-48">
+
+            <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={perProjectChartData}>
-                  <XAxis dataKey="name" />
+                <BarChart data={dailyIncomeData}>
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="income" name="Income (£)">
-                    {perProjectChartData.map((row, idx) => (
-                      <Cell
-                        key={idx}
-                        fill={PROJECT_COLORS[row.name as FixedProject]}
-                      />
-                    ))}
-                  </Bar>
+                  <Bar
+                    dataKey="AutoVisuals"
+                    stackId="income"
+                    fill={PROJECT_COLORS.AutoVisuals}
+                  />
+                  <Bar
+                    dataKey="AutoTrac"
+                    stackId="income"
+                    fill={PROJECT_COLORS.AutoTrac}
+                  />
+                  <Bar
+                    dataKey="AutoStock"
+                    stackId="income"
+                    fill={PROJECT_COLORS.AutoStock}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
