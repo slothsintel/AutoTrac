@@ -39,14 +39,12 @@ const PROJECT_COLORS: Record<FixedProject, string> = {
 
 const DAYS = 30;
 
-// -------------------- FX --------------------
+// ---------- FX (Frankfurter, browser-friendly) ----------
 type FxRates = Record<string, number>;
 const FX_TTL_MS = 12 * 60 * 60 * 1000;
-
-const fxKey = (cur: string) => `fx_${cur.toUpperCase()}_GBP`;
+const fxKey = (cur: string) => `fx_${cur.toUpperCase()}_GBP_v2`;
 
 function normCur(c?: string | null) {
-  // ✅ default missing currency to GBP
   return (c || "GBP").toUpperCase();
 }
 
@@ -68,14 +66,14 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
       }
     }
   } catch {
-    // ignore
+    // ignore cache errors
   }
 
-  const url = `https://api.exchangerate.host/latest?base=${encodeURIComponent(
-    cur
-  )}&symbols=GBP`;
-
-  const res = await fetch(url);
+  // Frankfurter: https://www.frankfurter.app/docs/
+  const res = await fetch(
+    `https://api.frankfurter.app/latest?from=${encodeURIComponent(cur)}&to=GBP`,
+    { cache: "no-store" }
+  );
   if (!res.ok) throw new Error(`FX fetch failed: ${res.status}`);
   const data = await res.json();
 
@@ -83,7 +81,7 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
   if (!Number.isFinite(rate) || rate <= 0) throw new Error("Bad FX rate");
 
   try {
-    localStorage.setItem(fxKey(cur), JSON.stringify({ rate, ts: Date.now() }));
+    localStorage.setItem(fxKey(cur), JSON.stringify({ rate, ts:Date.now() }));
   } catch {
     // ignore
   }
@@ -91,15 +89,16 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
   return rate;
 }
 
-function toGBP(amount: number, currency?: string | null, rates?: FxRates): number {
+function toGBP(amount: number, currency?: string | null, rates?: FxRates): number | null {
   const cur = normCur(currency);
-  if (cur === "GBP") return Number(amount) || 0;
+  const v = Number(amount) || 0;
+  if (cur === "GBP") return v;
   const r = rates?.[cur];
-  if (!r) return Number(amount) || 0; // fallback
-  return (Number(amount) || 0) * r;
+  if (!r) return null; // ✅ never fake-convert
+  return v * r;
 }
 
-// -------------------- Dates --------------------
+// ---------- Dates ----------
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const toDayKey = (d: Date) =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -172,13 +171,11 @@ export default function Home() {
   const matchesFilter = (projectName?: string) =>
     filter === "All" || (projectName && filter === projectName);
 
-  // FX: load currencies in incomes
+  // Load FX rates for currencies appearing in incomes
   useEffect(() => {
     let cancelled = false;
 
-    const currencies = Array.from(
-      new Set((incomes || []).map((i) => normCur(i.currency)))
-    );
+    const currencies = Array.from(new Set((incomes || []).map((i) => normCur(i.currency))));
     const missing = currencies.filter((c) => c !== "GBP" && !fxRates[c]);
     if (missing.length === 0) return;
 
@@ -188,7 +185,6 @@ export default function Home() {
           missing.map(async (c) => [c, await fetchRateToGBP(c)] as const)
         );
         if (cancelled) return;
-
         setFxRates((prev) => {
           const next = { ...prev };
           for (const [c, r] of pairs) next[c] = r;
@@ -236,10 +232,11 @@ export default function Home() {
       const pname = projectMap[inc.project_id] as FixedProject | undefined;
       if (!pname || !(pname in PROJECT_COLORS)) continue;
 
-      const dayKey = toDayKey(new Date(inc.date)); // robust
+      const dayKey = toDayKey(new Date(inc.date));
       if (!rows.has(dayKey)) continue;
 
-      rows.get(dayKey)![pname] += toGBP(inc.amount, inc.currency, fxRates);
+      const gbp = toGBP(inc.amount, inc.currency, fxRates);
+      rows.get(dayKey)![pname] += gbp ?? 0; // ✅ 0 until FX ready
     }
 
     return Array.from(rows.values());
@@ -283,7 +280,8 @@ export default function Home() {
 
       const name = projectMap[inc.project_id] as FixedProject | undefined;
       if (name && totals[name] != null) {
-        totals[name] += toGBP(inc.amount, inc.currency, fxRates);
+        const gbp = toGBP(inc.amount, inc.currency, fxRates);
+        totals[name] += gbp ?? 0;
       }
     }
     return totals;
@@ -372,16 +370,12 @@ export default function Home() {
         </button>
       </div>
 
-      <FeedCard
-        title="Totals overview"
-        subtitle={`Stacked by date (last ${DAYS} days) • Income in GBP`}
-      >
+      <FeedCard title="Totals overview" subtitle={`Stacked by date (last ${DAYS} days) • Income in GBP`}>
         <div className="space-y-6">
           <div>
             <p className="text-xs mb-1 text-neutral-600 dark:text-neutral-400">
               Daily time (hours) — stacked by project
             </p>
-
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dailyTimeData}>
@@ -401,7 +395,6 @@ export default function Home() {
             <p className="text-xs mb-1 text-neutral-600 dark:text-neutral-400">
               Daily income (£) — stacked by project (auto FX)
             </p>
-
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dailyIncomeData}>
@@ -453,14 +446,11 @@ export default function Home() {
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className={projectColorClass(pname)}>
-                    {pname} · #{e.id}
-                  </div>
+                  <div className={projectColorClass(pname)}>{pname} · #{e.id}</div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">
                     {e.end_time ? "stopped" : "running"} · {new Date(e.start_time).toLocaleString()}
                   </div>
                 </div>
-
                 <button
                   onClick={() => deleteTimeEntry(e.id)}
                   className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
@@ -489,14 +479,12 @@ export default function Home() {
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className={projectColorClass(pname)}>
-                    {pname} · #{i.id}
-                  </div>
+                  <div className={projectColorClass(pname)}>{pname} · #{i.id}</div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">
                     {new Date(i.date).toLocaleDateString()} ·{" "}
                     {cur === "GBP"
                       ? `£${Number(i.amount).toFixed(2)}`
-                      : `${cur} ${Number(i.amount).toFixed(2)}  ≈  £${gbp.toFixed(2)}`}
+                      : `${cur} ${Number(i.amount).toFixed(2)}  ≈  ${gbp == null ? "—" : `£${gbp.toFixed(2)}`}`}
                   </div>
                 </div>
 

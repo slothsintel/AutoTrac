@@ -14,7 +14,7 @@ type Project = { id: number; name: string };
 
 type FxRates = Record<string, number>;
 const FX_TTL_MS = 12 * 60 * 60 * 1000;
-const fxKey = (cur: string) => `fx_${cur.toUpperCase()}_GBP`;
+const fxKey = (cur: string) => `fx_${cur.toUpperCase()}_GBP_v2`;
 
 function normCur(c?: string | null) {
   return (c || "GBP").toUpperCase();
@@ -42,7 +42,8 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
   }
 
   const res = await fetch(
-    `https://api.exchangerate.host/latest?base=${encodeURIComponent(cur)}&symbols=GBP`
+    `https://api.frankfurter.app/latest?from=${encodeURIComponent(cur)}&to=GBP`,
+    { cache: "no-store" }
   );
   if (!res.ok) throw new Error(`FX fetch failed: ${res.status}`);
   const data = await res.json();
@@ -59,12 +60,13 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
   return rate;
 }
 
-function toGBP(amount: number, currency?: string | null, rates?: FxRates): number {
+function toGBP(amount: number, currency?: string | null, rates?: FxRates): number | null {
   const cur = normCur(currency);
-  if (cur === "GBP") return Number(amount) || 0;
+  const v = Number(amount) || 0;
+  if (cur === "GBP") return v;
   const r = rates?.[cur];
-  if (!r) return 0; // show 0 until rate arrives (prevents wrong values)
-  return (Number(amount) || 0) * r;
+  if (!r) return null; // ✅ never fake-convert
+  return v * r;
 }
 
 function formatMoney(curRaw: string | null | undefined, amtRaw: number) {
@@ -84,7 +86,7 @@ export default function Incomes() {
   const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
   const [projectId, setProjectId] = useState<number | "">("");
-  const [currency, setCurrency] = useState<string>("USD"); // default USD is fine
+  const [currency, setCurrency] = useState<string>("USD");
   const [amount, setAmount] = useState<string>("");
   const [source, setSource] = useState<string>("");
 
@@ -107,9 +109,10 @@ export default function Incomes() {
     load().catch(console.error);
   }, []);
 
-  // load FX rates for any currencies used in list OR selected in input
+  // Load FX rates for currencies in list + selected input currency
   useEffect(() => {
     let cancelled = false;
+
     const currencies = new Set<string>();
     currencies.add(normCur(currency));
     for (const i of incomes) currencies.add(normCur(i.currency));
@@ -123,6 +126,7 @@ export default function Incomes() {
           missing.map(async (c) => [c, await fetchRateToGBP(c)] as const)
         );
         if (cancelled) return;
+
         setFxRates((prev) => {
           const next = { ...prev };
           for (const [c, r] of pairs) next[c] = r;
@@ -151,14 +155,11 @@ export default function Incomes() {
 
     const cur = normCur(currency);
 
-    // ✅ IMPORTANT:
-    // We store what the user entered in the selected currency (USD stays USD).
-    // Conversion is for display + analytics (GBP).
     await api.post(endpoints.incomes, {
       project_id: projectId,
       date: new Date().toISOString().split("T")[0],
       amount: amt,
-      currency: cur,
+      currency: cur, // store original currency
       source: source || null,
     });
 
@@ -217,7 +218,7 @@ export default function Incomes() {
 
         {normCur(currency) !== "GBP" ? (
           <div className="text-xs text-neutral-600 dark:text-neutral-400">
-            ≈ £{inputGBP.toFixed(2)} (auto FX)
+            ≈ {inputGBP == null ? "—" : `£${inputGBP.toFixed(2)}`} (auto FX)
           </div>
         ) : null}
 
@@ -237,9 +238,7 @@ export default function Incomes() {
         </button>
       </div>
 
-      <div className="text-neutral-900 dark:text-neutral-100 font-semibold mb-2">
-        Recent incomes
-      </div>
+      <div className="text-neutral-900 dark:text-neutral-100 font-semibold mb-2">Recent incomes</div>
 
       <ul className="space-y-2">
         {incomes
@@ -262,7 +261,7 @@ export default function Incomes() {
 
                   {cur !== "GBP" ? (
                     <div className="text-xs text-neutral-600 dark:text-neutral-400">
-                      ≈ £{gbp.toFixed(2)}
+                      ≈ {gbp == null ? "—" : `£${gbp.toFixed(2)}`}
                     </div>
                   ) : null}
 
