@@ -307,10 +307,36 @@ function ManualTimeModal(props: {
         return null;
       }
       endISO = toLocalISO(draft.date, draft.endTime);
-      if (new Date(endISO).getTime() <= new Date(startISO).getTime()) {
-        setError("End time must be after start time (same day).");
+
+      const startMs = new Date(startISO).getTime();
+      let endMs = new Date(endISO).getTime();
+
+      // Cross-midnight support:
+      // If end is earlier than start, assume it ends the NEXT day.
+      if (endMs < startMs) {
+        const nextDay = new Date(draft.date + "T00:00:00");
+        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDayStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, "0")}-${String(
+          nextDay.getDate()
+        ).padStart(2, "0")}`;
+
+        endISO = toLocalISO(nextDayStr, draft.endTime);
+        endMs = new Date(endISO).getTime();
+      }
+
+      // Still block zero-length entries
+      if (endMs === startMs) {
+        setError("End time must be different from start time.");
         return null;
       }
+
+      // Optional safety: block crazy-long entries (e.g., > 24h)
+      const hours = (endMs - startMs) / 1000 / 3600;
+      if (hours > 24) {
+        setError("That entry is longer than 24 hours — please check the times.");
+        return null;
+      }
+
     } else {
       const mins = Number(draft.durationMin);
       if (!Number.isFinite(mins) || mins <= 0) {
