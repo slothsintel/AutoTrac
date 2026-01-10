@@ -1,4 +1,3 @@
-// frontend/src/pages/Home.tsx
 import { useEffect, useMemo, useState } from "react";
 import api, { endpoints } from "../api";
 import FeedCard from "../components/FeedCard";
@@ -194,12 +193,382 @@ function chartInnerWidthPx(daysCount: number) {
   return Math.max(minWidth, daysCount * pxPerDay);
 }
 
+// ---------- Manual time helpers ----------
+type ManualMode = "startEnd" | "duration";
+type ManualDraft = {
+  projectId: string;
+  date: string; // YYYY-MM-DD
+  mode: ManualMode;
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
+  durationMin: string; // numeric string
+  note: string;
+};
+
+function todayYMD() {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+}
+
+function toLocalISO(dateStr: string, hhmm: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hh, mm] = hhmm.split(":").map(Number);
+  const dt = new Date(y, m - 1, d, hh, mm, 0, 0); // local time
+  return dt.toISOString();
+}
+
+function addMinutesLocalISO(dateStr: string, hhmm: string, mins: number) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hh, mm] = hhmm.split(":").map(Number);
+  const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
+  dt.setMinutes(dt.getMinutes() + mins);
+  return dt.toISOString();
+}
+
+function ManualTimeModal(props: {
+  open: boolean;
+  onClose: () => void;
+  projects: Project[];
+  onCreated: () => void;
+}) {
+  const { open, onClose, projects, onCreated } = props;
+
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fixedProjects = useMemo(() => {
+    const fixed = projects.filter((p) => FIXED.includes(p.name as FixedProject));
+    return fixed.length ? fixed : projects;
+  }, [projects]);
+
+  const defaultProjectId = useMemo(() => {
+    const first = fixedProjects?.[0]?.id;
+    return first != null ? String(first) : "";
+  }, [fixedProjects]);
+
+  const [draft, setDraft] = useState<ManualDraft>(() => ({
+    projectId: "",
+    date: todayYMD(),
+    mode: "startEnd",
+    startTime: "09:00",
+    endTime: "10:00",
+    durationMin: "60",
+    note: "",
+  }));
+
+  useEffect(() => {
+    if (!open) return;
+    setError(null);
+    setDraft((d) => ({
+      ...d,
+      projectId: d.projectId || defaultProjectId,
+    }));
+  }, [open, defaultProjectId]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const parsedProjectId = Number(draft.projectId);
+  const projectOk = Number.isFinite(parsedProjectId) && parsedProjectId > 0;
+
+  function validate():
+    | { startISO: string; endISO: string; payload: any }
+    | null {
+    setError(null);
+
+    if (!projectOk) {
+      setError("Please choose a project.");
+      return null;
+    }
+    if (!draft.date) {
+      setError("Please choose a date.");
+      return null;
+    }
+    if (!draft.startTime) {
+      setError("Please enter a start time.");
+      return null;
+    }
+
+    const startISO = toLocalISO(draft.date, draft.startTime);
+    let endISO = "";
+
+    if (draft.mode === "startEnd") {
+      if (!draft.endTime) {
+        setError("Please enter an end time.");
+        return null;
+      }
+      endISO = toLocalISO(draft.date, draft.endTime);
+      if (new Date(endISO).getTime() <= new Date(startISO).getTime()) {
+        setError("End time must be after start time (same day).");
+        return null;
+      }
+    } else {
+      const mins = Number(draft.durationMin);
+      if (!Number.isFinite(mins) || mins <= 0) {
+        setError("Duration must be a positive number of minutes.");
+        return null;
+      }
+      endISO = addMinutesLocalISO(draft.date, draft.startTime, mins);
+    }
+
+    // Backend-friendly payload (matches your TimeEntry fields)
+    const payload = {
+      project_id: parsedProjectId,
+      start_time: startISO,
+      end_time: endISO,
+      note: draft.note?.trim() || null,
+      // Optional (if backend ignores, it's fine):
+      // source: "manual",
+    };
+
+    return { startISO, endISO, payload };
+  }
+
+  async function save() {
+    const v = validate();
+    if (!v) return;
+
+    setSaving(true);
+    setError(null);
+    try {
+      await api.post(endpoints.timeEntries, v.payload);
+      onCreated();
+      onClose();
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.detail ||
+        e?.response?.data?.message ||
+        e?.message ||
+        "Failed to save manual time entry.";
+      setError(String(msg));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 px-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl border border-neutral-200 dark:border-neutral-700
+                   bg-white dark:bg-neutral-900 shadow-xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-bold">Add manual time</div>
+            <div className="text-xs text-neutral-600 dark:text-neutral-400">
+              Create a completed entry without using the timer.
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700
+                       bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            title="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="px-4 py-4 space-y-4">
+          {/* Project */}
+          <div>
+            <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+              Project
+            </div>
+            <select
+              value={draft.projectId}
+              onChange={(e) => setDraft((d) => ({ ...d, projectId: e.target.value }))}
+              className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                         text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+            >
+              <option value="" disabled>
+                Select a project…
+              </option>
+              {fixedProjects.map((p) => (
+                <option key={p.id} value={String(p.id)}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date + mode */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+                Date
+              </div>
+              <input
+                type="date"
+                value={draft.date}
+                onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))}
+                className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+              />
+            </div>
+
+            <div>
+              <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+                Input type
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDraft((d) => ({ ...d, mode: "startEnd" }))}
+                  className={`flex-1 px-3 py-2 rounded-xl border ${
+                    draft.mode === "startEnd"
+                      ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-neutral-900 dark:border-white"
+                      : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  }`}
+                  title="Enter start and end time"
+                >
+                  Start/End
+                </button>
+                <button
+                  onClick={() => setDraft((d) => ({ ...d, mode: "duration" }))}
+                  className={`flex-1 px-3 py-2 rounded-xl border ${
+                    draft.mode === "duration"
+                      ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-neutral-900 dark:border-white"
+                      : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  }`}
+                  title="Enter start time and duration"
+                >
+                  Duration
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Times */}
+          {draft.mode === "startEnd" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+                  Start time
+                </div>
+                <input
+                  type="time"
+                  value={draft.startTime}
+                  onChange={(e) => setDraft((d) => ({ ...d, startTime: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                />
+              </div>
+              <div>
+                <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+                  End time
+                </div>
+                <input
+                  type="time"
+                  value={draft.endTime}
+                  onChange={(e) => setDraft((d) => ({ ...d, endTime: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+                  Start time
+                </div>
+                <input
+                  type="time"
+                  value={draft.startTime}
+                  onChange={(e) => setDraft((d) => ({ ...d, startTime: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                />
+              </div>
+              <div>
+                <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+                  Duration (minutes)
+                </div>
+                <input
+                  inputMode="numeric"
+                  value={draft.durationMin}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      durationMin: e.target.value.replace(/[^\d]/g, ""),
+                    }))
+                  }
+                  placeholder="e.g. 45"
+                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Note */}
+          <div>
+            <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+              Note (optional)
+            </div>
+            <textarea
+              rows={3}
+              value={draft.note}
+              onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))}
+              className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                         text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+            />
+          </div>
+
+          {error && (
+            <div className="text-sm text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 flex gap-2">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 px-4 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700
+                       bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-70"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            disabled={saving}
+            className="flex-1 px-4 py-2 rounded-xl border border-neutral-900 dark:border-white
+                       bg-neutral-900 text-white dark:bg-white dark:text-neutral-900
+                       hover:opacity-95 disabled:opacity-70 font-semibold"
+          >
+            {saving ? "Saving…" : "Save entry"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [filter, setFilter] = useState<string>("All");
   const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
+
+  const [manualOpen, setManualOpen] = useState(false);
 
   const loadAll = async () => {
     try {
@@ -422,7 +791,7 @@ export default function Home() {
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="flex-1 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800 
+          className="flex-1 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
         >
           <option value="All">All projects</option>
@@ -434,6 +803,15 @@ export default function Home() {
         </select>
 
         <button
+          onClick={() => setManualOpen(true)}
+          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
+                     bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          title="Add manual time"
+        >
+          + Manual
+        </button>
+
+        <button
           onClick={loadAll}
           className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
                      bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -442,6 +820,13 @@ export default function Home() {
           Refresh
         </button>
       </div>
+
+      <ManualTimeModal
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+        projects={projects}
+        onCreated={loadAll}
+      />
 
       <FeedCard
         title="Totals overview"
