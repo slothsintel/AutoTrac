@@ -1,6 +1,34 @@
+import { useEffect, useState } from "react";
 import FeedCard from "../components/FeedCard";
 
+const THEME_KEY = "autotrac-theme"; // "dark" | "light"
+
+function getInitialTheme(): "dark" | "light" {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === "dark" || saved === "light") return saved;
+
+  // fallback to system preference
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
 export default function More() {
+  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = () =>
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+
   const links = [
     { label: "Privacy", href: "https://slothsintel.com/privacy.html" },
     { label: "Terms", href: "https://slothsintel.com/terms.html" },
@@ -9,8 +37,27 @@ export default function More() {
 
   return (
     <div className="mx-auto max-w-md px-3 py-3">
-      <FeedCard title="More" subtitle="Links & app information">
-        <div className="space-y-3">
+      <FeedCard title="More" subtitle="Preferences & app information">
+        <div className="space-y-4">
+          {/* Dark mode toggle */}
+          <button
+            onClick={toggleTheme}
+            className="
+              w-full flex items-center justify-between px-4 py-3 rounded-xl border
+              border-neutral-300 dark:border-neutral-700
+              bg-transparent
+              hover:bg-neutral-100 dark:hover:bg-neutral-800
+              text-neutral-900 dark:text-neutral-100
+              font-medium
+            "
+          >
+            <span>Dark mode</span>
+            <span className="text-sm text-neutral-600 dark:text-neutral-400">
+              {theme === "dark" ? "On" : "Off"}
+            </span>
+          </button>
+
+          {/* Links */}
           <div className="grid grid-cols-3 gap-2">
             {links.map((l) => (
               <a
@@ -33,7 +80,7 @@ export default function More() {
           </div>
 
           <p className="text-xs text-neutral-600 dark:text-neutral-400">
-            Links open in a new tab so you won’t lose your current session.
+            Settings are saved on this device.
           </p>
         </div>
       </FeedCard>
@@ -41,11 +88,11 @@ export default function More() {
       {/* Footer — ONLY on More page */}
       <footer className="mt-10 pt-6 border-t border-neutral-300 dark:border-neutral-700 text-xs text-neutral-600 dark:text-neutral-400 space-y-2">
         <p className="font-medium text-neutral-700 dark:text-neutral-300">
-          AutoTrac is powered by Sloths Intel.
+          AutoTrac is powered by Sloths Intel
         </p>
 
         <p>
-          © 2025–2026 Sloths Intel.{" "}
+          © 2025–2026{" "}Sloths Intel.
           <strong className="text-neutral-800 dark:text-neutral-200">
             
           </strong>
