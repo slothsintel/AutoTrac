@@ -1,3 +1,4 @@
+// frontend/src/pages/Home.tsx
 import { useEffect, useMemo, useState } from "react";
 import api, { endpoints } from "../api";
 import FeedCard from "../components/FeedCard";
@@ -89,7 +90,11 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
   return rate;
 }
 
-function toGBP(amount: number, currency?: string | null, rates?: FxRates): number | null {
+function toGBP(
+  amount: number,
+  currency?: string | null,
+  rates?: FxRates
+): number | null {
   const cur = normCur(currency);
   const v = Number(amount) || 0;
   if (cur === "GBP") return v;
@@ -123,7 +128,7 @@ const emptyDailyRow = (date: string): DailyRow => ({
   AutoStock: 0,
 });
 
-// ---------- ggplot-ish styling helpers for Recharts ----------
+// ---------- ggplot-ish styling helpers ----------
 const GG = {
   grid: "#e5e7eb",
   axis: "#6b7280",
@@ -136,12 +141,6 @@ function formatShortDate(iso: string) {
   const m = d.toLocaleString(undefined, { month: "short" });
   const day = String(d.getDate());
   return `${m} ${day}`;
-}
-
-function sparseTicks(keys: string[], maxTicks = 6) {
-  if (keys.length <= maxTicks) return keys;
-  const step = Math.ceil(keys.length / maxTicks);
-  return keys.filter((_, idx) => idx % step === 0);
 }
 
 const GgTooltip = ({ active, payload, label }: any) => {
@@ -173,7 +172,11 @@ const GgTooltip = ({ active, payload, label }: any) => {
         rows.map((r: any) => (
           <div
             key={r.name}
-            style={{ display: "flex", justifyContent: "space-between", gap: 12 }}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
           >
             <span style={{ color: "#374151" }}>{r.name}</span>
             <span style={{ fontWeight: 700 }}>{r.value.toFixed(2)}</span>
@@ -183,6 +186,13 @@ const GgTooltip = ({ active, payload, label }: any) => {
     </div>
   );
 };
+
+// Make the chart wider than the viewport so user can swipe left/right
+function chartInnerWidthPx(daysCount: number) {
+  const pxPerDay = 28; // increase for wider bars / easier reading
+  const minWidth = 520; // avoid tiny charts on desktop
+  return Math.max(minWidth, daysCount * pxPerDay);
+}
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -236,7 +246,9 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
 
-    const currencies = Array.from(new Set((incomes || []).map((i) => normCur(i.currency))));
+    const currencies = Array.from(
+      new Set((incomes || []).map((i) => normCur(i.currency)))
+    );
     const missing = currencies.filter((c) => c !== "GBP" && !fxRates[c]);
     if (missing.length === 0) return;
 
@@ -263,8 +275,6 @@ export default function Home() {
   }, [incomes]);
 
   const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
-  const timeTicks = useMemo(() => sparseTicks(lastNDaysKeys, 6), [lastNDaysKeys]);
-  const incomeTicks = useMemo(() => sparseTicks(lastNDaysKeys, 6), [lastNDaysKeys]);
 
   const dailyTimeData: DailyRow[] = useMemo(() => {
     const rows = new Map<string, DailyRow>();
@@ -299,7 +309,7 @@ export default function Home() {
       if (!rows.has(dayKey)) continue;
 
       const gbp = toGBP(inc.amount, inc.currency, fxRates);
-      rows.get(dayKey)![pname] += gbp ?? 0;
+      rows.get(dayKey)![pname] += gbp ?? 0; // 0 until FX ready
     }
 
     return Array.from(rows.values());
@@ -435,7 +445,7 @@ export default function Home() {
 
       <FeedCard
         title="Totals overview"
-        subtitle={`Stacked by date (last ${DAYS} days) • Income in GBP`}
+        subtitle={`Stacked by date (last ${DAYS} days) • Swipe left/right on charts`}
       >
         <div className="space-y-6">
           <div>
@@ -443,63 +453,77 @@ export default function Home() {
               Daily time (hours) — stacked by project
             </p>
 
-            {/* Option A: light chart panel (ggplot-ish) */}
+            {/* Light chart panel + horizontal scroll */}
             <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
-              <div className="h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={dailyTimeData}
-                    margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
-                    barCategoryGap={10}
-                  >
-                    <CartesianGrid stroke={GG.grid} strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey="date"
-                      ticks={timeTicks}
-                      tickFormatter={formatShortDate}
-                      tick={{ fontSize: 11, fill: GG.axis }}
-                      tickLine={false}
-                      axisLine={false}
-                      minTickGap={16}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: GG.axis }}
-                      tickLine={false}
-                      axisLine={false}
-                      width={30}
-                    />
-                    <Tooltip content={<GgTooltip />} />
-                    <Legend
-                      verticalAlign="top"
-                      align="left"
-                      iconType="square"
-                      wrapperStyle={{ fontSize: 12, color: GG.axis, paddingBottom: 8 }}
-                    />
+              <div className="overflow-x-auto">
+                <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
+                  <div className="h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={dailyTimeData}
+                        margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
+                        barCategoryGap={10}
+                      >
+                        <CartesianGrid
+                          stroke={GG.grid}
+                          strokeDasharray="3 3"
+                          vertical={false}
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickFormatter={formatShortDate}
+                          tick={{ fontSize: 11, fill: GG.axis }}
+                          tickLine={false}
+                          axisLine={false}
+                          minTickGap={16}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 11, fill: GG.axis }}
+                          tickLine={false}
+                          axisLine={false}
+                          width={30}
+                        />
+                        <Tooltip content={<GgTooltip />} />
+                        <Legend
+                          verticalAlign="top"
+                          align="left"
+                          iconType="square"
+                          wrapperStyle={{
+                            fontSize: 12,
+                            color: GG.axis,
+                            paddingBottom: 8,
+                          }}
+                        />
 
-                    {/* stack order bottom->top */}
-                    <Bar
-                      dataKey="AutoStock"
-                      stackId="time"
-                      fill={PROJECT_COLORS.AutoStock}
-                      radius={[6, 6, 0, 0]}
-                      fillOpacity={0.85}
-                    />
-                    <Bar
-                      dataKey="AutoTrac"
-                      stackId="time"
-                      fill={PROJECT_COLORS.AutoTrac}
-                      radius={[6, 6, 0, 0]}
-                      fillOpacity={0.85}
-                    />
-                    <Bar
-                      dataKey="AutoVisuals"
-                      stackId="time"
-                      fill={PROJECT_COLORS.AutoVisuals}
-                      radius={[6, 6, 0, 0]}
-                      fillOpacity={0.85}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                        <Bar
+                          dataKey="AutoStock"
+                          stackId="time"
+                          fill={PROJECT_COLORS.AutoStock}
+                          radius={[6, 6, 0, 0]}
+                          fillOpacity={0.85}
+                        />
+                        <Bar
+                          dataKey="AutoTrac"
+                          stackId="time"
+                          fill={PROJECT_COLORS.AutoTrac}
+                          radius={[6, 6, 0, 0]}
+                          fillOpacity={0.85}
+                        />
+                        <Bar
+                          dataKey="AutoVisuals"
+                          stackId="time"
+                          fill={PROJECT_COLORS.AutoVisuals}
+                          radius={[6, 6, 0, 0]}
+                          fillOpacity={0.85}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-2 text-[11px] text-neutral-500">
+                Swipe left/right to view more days
               </div>
             </div>
           </div>
@@ -509,62 +533,77 @@ export default function Home() {
               Daily income (£) — stacked by project (auto FX)
             </p>
 
-            {/* Option A: light chart panel (ggplot-ish) */}
+            {/* Light chart panel + horizontal scroll */}
             <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
-              <div className="h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={dailyIncomeData}
-                    margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
-                    barCategoryGap={10}
-                  >
-                    <CartesianGrid stroke={GG.grid} strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey="date"
-                      ticks={incomeTicks}
-                      tickFormatter={formatShortDate}
-                      tick={{ fontSize: 11, fill: GG.axis }}
-                      tickLine={false}
-                      axisLine={false}
-                      minTickGap={16}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: GG.axis }}
-                      tickLine={false}
-                      axisLine={false}
-                      width={30}
-                    />
-                    <Tooltip content={<GgTooltip />} />
-                    <Legend
-                      verticalAlign="top"
-                      align="left"
-                      iconType="square"
-                      wrapperStyle={{ fontSize: 12, color: GG.axis, paddingBottom: 8 }}
-                    />
+              <div className="overflow-x-auto">
+                <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
+                  <div className="h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={dailyIncomeData}
+                        margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
+                        barCategoryGap={10}
+                      >
+                        <CartesianGrid
+                          stroke={GG.grid}
+                          strokeDasharray="3 3"
+                          vertical={false}
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickFormatter={formatShortDate}
+                          tick={{ fontSize: 11, fill: GG.axis }}
+                          tickLine={false}
+                          axisLine={false}
+                          minTickGap={16}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 11, fill: GG.axis }}
+                          tickLine={false}
+                          axisLine={false}
+                          width={30}
+                        />
+                        <Tooltip content={<GgTooltip />} />
+                        <Legend
+                          verticalAlign="top"
+                          align="left"
+                          iconType="square"
+                          wrapperStyle={{
+                            fontSize: 12,
+                            color: GG.axis,
+                            paddingBottom: 8,
+                          }}
+                        />
 
-                    <Bar
-                      dataKey="AutoStock"
-                      stackId="income"
-                      fill={PROJECT_COLORS.AutoStock}
-                      radius={[6, 6, 0, 0]}
-                      fillOpacity={0.85}
-                    />
-                    <Bar
-                      dataKey="AutoTrac"
-                      stackId="income"
-                      fill={PROJECT_COLORS.AutoTrac}
-                      radius={[6, 6, 0, 0]}
-                      fillOpacity={0.85}
-                    />
-                    <Bar
-                      dataKey="AutoVisuals"
-                      stackId="income"
-                      fill={PROJECT_COLORS.AutoVisuals}
-                      radius={[6, 6, 0, 0]}
-                      fillOpacity={0.85}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                        <Bar
+                          dataKey="AutoStock"
+                          stackId="income"
+                          fill={PROJECT_COLORS.AutoStock}
+                          radius={[6, 6, 0, 0]}
+                          fillOpacity={0.85}
+                        />
+                        <Bar
+                          dataKey="AutoTrac"
+                          stackId="income"
+                          fill={PROJECT_COLORS.AutoTrac}
+                          radius={[6, 6, 0, 0]}
+                          fillOpacity={0.85}
+                        />
+                        <Bar
+                          dataKey="AutoVisuals"
+                          stackId="income"
+                          fill={PROJECT_COLORS.AutoVisuals}
+                          radius={[6, 6, 0, 0]}
+                          fillOpacity={0.85}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-2 text-[11px] text-neutral-500">
+                Swipe left/right to view more days
               </div>
             </div>
           </div>
@@ -587,7 +626,8 @@ export default function Home() {
                 {name}
               </span>
               <span className="text-xs text-neutral-600 dark:text-neutral-400">
-                ⏱ {fmtHours(weeklyTimeTotals[name])} · 💰 £{weeklyIncomeTotals[name].toFixed(2)}
+                ⏱ {fmtHours(weeklyTimeTotals[name])} · 💰 £
+                {weeklyIncomeTotals[name].toFixed(2)}
               </span>
             </li>
           ))}
@@ -605,9 +645,12 @@ export default function Home() {
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className={projectColorClass(pname)}>{pname} · #{e.id}</div>
+                  <div className={projectColorClass(pname)}>
+                    {pname} · #{e.id}
+                  </div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">
-                    {e.end_time ? "stopped" : "running"} · {new Date(e.start_time).toLocaleString()}
+                    {e.end_time ? "stopped" : "running"} ·{" "}
+                    {new Date(e.start_time).toLocaleString()}
                   </div>
                 </div>
                 <button
@@ -638,7 +681,9 @@ export default function Home() {
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className={projectColorClass(pname)}>{pname} · #{i.id}</div>
+                  <div className={projectColorClass(pname)}>
+                    {pname} · #{i.id}
+                  </div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">
                     {new Date(i.date).toLocaleDateString()} ·{" "}
                     {cur === "GBP"

@@ -88,14 +88,14 @@ export default function More() {
       {/* Footer — ONLY on More page */}
       <footer className="mt-10 pt-6 border-t border-neutral-300 dark:border-neutral-700 text-xs text-neutral-600 dark:text-neutral-400 space-y-2">
         <p className="font-medium text-neutral-700 dark:text-neutral-300">
-          AutoTrac is powered by Sloths Intel
+          AutoTrac 0.1.0-beta is powered by Sloths Intel
         </p>
 
         <p>
           © 2025–2026{" "}Sloths Intel.
-          <strong className="text-neutral-800 dark:text-neutral-200">
-            
-          </strong>
+        </p>
+
+        <p>
           A trading name of Sloths Intel Ltd.
         </p>
 
