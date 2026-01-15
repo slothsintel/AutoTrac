@@ -1,6 +1,35 @@
+# backend/app/schemas.py
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+
+# ---------- Auth ----------
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserPublic(BaseModel):
+    id: int
+    email: EmailStr
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
 
 # ---------- Project ----------
@@ -16,10 +45,10 @@ class ProjectCreate(ProjectBase):
 
 class Project(ProjectBase):
     id: int
+    user_id: int
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------- Time entry ----------
@@ -37,9 +66,9 @@ class TimeEntryCreate(TimeEntryBase):
 
 class TimeEntry(TimeEntryBase):
     id: int
+    user_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------- Income ----------
@@ -59,6 +88,6 @@ class IncomeCreate(IncomeBase):
 
 class Income(IncomeBase):
     id: int
+    user_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
