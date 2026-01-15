@@ -113,3 +113,4 @@ yapf==0.43.0
 yarl==1.22.0
 psycopg[binary]==3.2.13
 email-validator==2.2.0
+python-jose[cryptography]==3.3.0
