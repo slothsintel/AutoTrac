@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api, { endpoints } from "../api";
 import FeedCard from "../components/FeedCard";
 import {
@@ -320,14 +320,11 @@ function ManualTimeModal(props: {
       endISO = addMinutesLocalISO(draft.date, draft.startTime, mins);
     }
 
-    // Backend-friendly payload (matches your TimeEntry fields)
     const payload = {
       project_id: parsedProjectId,
       start_time: startISO,
       end_time: endISO,
       note: draft.note?.trim() || null,
-      // Optional (if backend ignores, it's fine):
-      // source: "manual",
     };
 
     return { startISO, endISO, payload };
@@ -385,14 +382,15 @@ function ManualTimeModal(props: {
         </div>
 
         <div className="px-4 py-4 space-y-4">
-          {/* Project */}
           <div>
             <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
               Project
             </div>
             <select
               value={draft.projectId}
-              onChange={(e) => setDraft((d) => ({ ...d, projectId: e.target.value }))}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, projectId: e.target.value }))
+              }
               className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                          text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
             >
@@ -407,7 +405,6 @@ function ManualTimeModal(props: {
             </select>
           </div>
 
-          {/* Date + mode */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
@@ -416,7 +413,9 @@ function ManualTimeModal(props: {
               <input
                 type="date"
                 value={draft.date}
-                onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, date: e.target.value }))
+                }
                 className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                            text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
               />
@@ -453,7 +452,6 @@ function ManualTimeModal(props: {
             </div>
           </div>
 
-          {/* Times */}
           {draft.mode === "startEnd" ? (
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -463,7 +461,9 @@ function ManualTimeModal(props: {
                 <input
                   type="time"
                   value={draft.startTime}
-                  onChange={(e) => setDraft((d) => ({ ...d, startTime: e.target.value }))}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, startTime: e.target.value }))
+                  }
                   className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                              text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
                 />
@@ -475,7 +475,9 @@ function ManualTimeModal(props: {
                 <input
                   type="time"
                   value={draft.endTime}
-                  onChange={(e) => setDraft((d) => ({ ...d, endTime: e.target.value }))}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, endTime: e.target.value }))
+                  }
                   className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                              text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
                 />
@@ -490,7 +492,9 @@ function ManualTimeModal(props: {
                 <input
                   type="time"
                   value={draft.startTime}
-                  onChange={(e) => setDraft((d) => ({ ...d, startTime: e.target.value }))}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, startTime: e.target.value }))
+                  }
                   className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                              text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
                 />
@@ -516,7 +520,6 @@ function ManualTimeModal(props: {
             </div>
           )}
 
-          {/* Note */}
           <div>
             <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
               Note (optional)
@@ -524,7 +527,9 @@ function ManualTimeModal(props: {
             <textarea
               rows={3}
               value={draft.note}
-              onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, note: e.target.value }))
+              }
               className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                          text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
             />
@@ -570,7 +575,25 @@ export default function Home() {
 
   const [manualOpen, setManualOpen] = useState(false);
 
-  const loadAll = async () => {
+  // ✅ chart scroll containers
+  const timeScrollRef = useRef<HTMLDivElement | null>(null);
+  const incomeScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // ✅ when this changes, we auto-scroll both charts to the far right
+  const [scrollToRightToken, setScrollToRightToken] = useState(0);
+
+  const scrollChartsToRight = () => {
+    // Run after DOM/layout updates
+    requestAnimationFrame(() => {
+      const t = timeScrollRef.current;
+      const i = incomeScrollRef.current;
+
+      if (t) t.scrollLeft = t.scrollWidth;
+      if (i) i.scrollLeft = i.scrollWidth;
+    });
+  };
+
+  const loadAll = async (opts?: { scrollCharts?: boolean }) => {
     try {
       const [pRes, tRes, iRes] = await Promise.all([
         api.get(endpoints.projects),
@@ -580,19 +603,26 @@ export default function Home() {
       setProjects(pRes.data as Project[]);
       setTimeEntries(tRes.data as TimeEntry[]);
       setIncomes(iRes.data as Income[]);
+
+      if (opts?.scrollCharts) {
+        // trigger an effect after state updates settle
+        setScrollToRightToken((n) => n + 1);
+      }
     } catch (err) {
       console.error("Home loadAll failed:", err);
     }
   };
 
+  // ✅ initial load: scroll to most recent (right)
   useEffect(() => {
-    loadAll();
+    loadAll({ scrollCharts: true });
   }, []);
 
+  // background refreshes should NOT yank the user to the right
   useEffect(() => {
-    const onFocus = () => loadAll();
+    const onFocus = () => loadAll({ scrollCharts: false });
     const onVis = () => {
-      if (!document.hidden) loadAll();
+      if (!document.hidden) loadAll({ scrollCharts: false });
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
@@ -601,6 +631,19 @@ export default function Home() {
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
+
+  // ✅ whenever token bumps (initial load, Refresh button, manual save), jump to right
+  useEffect(() => {
+    if (scrollToRightToken <= 0) return;
+
+    // Two RAFs = safer for ResponsiveContainer layout + width calc
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollChartsToRight();
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollToRightToken]);
 
   const projectMap = useMemo(() => {
     const m: Record<number, string> = {};
@@ -790,7 +833,11 @@ export default function Home() {
       <div className="flex gap-2 mb-4">
         <select
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setScrollToRightToken((n) => n + 1);
+          }}
+
           className="flex-1 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
         >
@@ -812,7 +859,7 @@ export default function Home() {
         </button>
 
         <button
-          onClick={loadAll}
+          onClick={() => loadAll({ scrollCharts: true })}
           className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
                      bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
           title="Refresh"
@@ -825,7 +872,7 @@ export default function Home() {
         open={manualOpen}
         onClose={() => setManualOpen(false)}
         projects={projects}
-        onCreated={loadAll}
+        onCreated={() => loadAll({ scrollCharts: true })}
       />
 
       <FeedCard
@@ -840,7 +887,7 @@ export default function Home() {
 
             {/* Light chart panel + horizontal scroll */}
             <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" ref={timeScrollRef}>
                 <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
                   <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
@@ -920,7 +967,7 @@ export default function Home() {
 
             {/* Light chart panel + horizontal scroll */}
             <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" ref={incomeScrollRef}>
                 <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
                   <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
