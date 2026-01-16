@@ -20,7 +20,7 @@ from .db import Base, SessionLocal, engine
 # create tables (NOTE: does not perform migrations; you already ran SQL migration)
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="AutoTrac backend")
+app = FastAPI(title="AutoTrac backend AUTH ENABLED")
 
 # ---------------- CORS ----------------
 
