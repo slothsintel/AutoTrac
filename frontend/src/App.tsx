@@ -34,6 +34,10 @@ export default function App() {
 
   useEffect(() => {
     void check();
+
+    const onAuthChanged = () => void check();
+    window.addEventListener("autotrac:auth-changed", onAuthChanged);
+    return () => window.removeEventListener("autotrac:auth-changed", onAuthChanged);
   }, []);
 
   if (!ready) {
