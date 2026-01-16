@@ -5,6 +5,8 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
+from sqlalchemy import UniqueConstraint
+
 
 from .db import Base
 
@@ -25,16 +27,16 @@ class User(Base):
 class Project(Base):
     __tablename__ = "projects"
 
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="uq_projects_user_name"),
+    )
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    user = relationship("User", back_populates="projects")
-    time_entries = relationship("TimeEntry", back_populates="project", cascade="all, delete-orphan")
-    incomes = relationship("IncomeRecord", back_populates="project", cascade="all, delete-orphan")
 
 
 class TimeEntry(Base):
