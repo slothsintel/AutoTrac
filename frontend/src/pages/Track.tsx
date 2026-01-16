@@ -116,7 +116,7 @@ export default function Track() {
     if (!active) return;
 
     try {
-      const res = await api.post(endpoints.stopTimeEntry(active.id));
+      const res = await api.post(endpoints.stopEntry(active.id));
       const updated = res.data as TimeEntry;
 
       setActive(null);
