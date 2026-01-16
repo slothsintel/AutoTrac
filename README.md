@@ -31,8 +31,8 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
   - [Income](#Income)
 - [Data Model](#Data-Model-Notes)
 - [Build & Deploy](#Build--Deploy-Render)
-  - [Frontend](#Frontend-1)
-  - [Backend](#Backend-1)
+  - [Frontend](#Frontend)
+  - [Backend](#Backend)
 - [Roadmap](#Future-Modules)
 - [Contribution](#Contribution)
 - [About](#About-Sloths-Fin)
@@ -274,15 +274,17 @@ Maintained by **Sloths Fin** of [**Sloths Intel GitHub**](https://github.com/slo
 # About Sloths Fin
 
 A financial brand under [**Sloths Intel**](https://slothsintel.com), specialising in financial technology development and financial data pipelines.
+
 ---
 
 # License
 
-MIT License.
+© 2025–2026 **Sloths Intel**.
 
-© 2025–2026 **Sloths Intel**
-AutoTrac is a trading name of **Sloths Intel Ltd**
-Registered in England and Wales (Company No. 16907507)
+A trading name of **Sloths Intel Ltd**
+Registered in England and Wales (Company No. 16907507).
+
+MIT License.
 
 ---
 
