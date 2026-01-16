@@ -27,8 +27,14 @@ app = FastAPI(title="AutoTrac backend AUTH ENABLED")
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+
+    # production frontend
     "https://autotrac.slothsintel.com",
+
+    # Render frontend (VERY IMPORTANT)
+    "https://autotrac-35sx.onrender.com",
 ]
+
 
 app.add_middleware(
     CORSMiddleware,
