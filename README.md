@@ -8,8 +8,8 @@
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)]()
 [![Status](https://img.shields.io/badge/Project-Active-brightgreen.svg)]()
 
-[![Static Badge](https://img.shields.io/badge/Sloths%20Fin-Powered-%23f378d0)]()
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20WSL%20%7C%20macOS-lightgrey.svg)]()
+[![Static Badge](https://img.shields.io/badge/Sloths_Fin-Powered-brightgreen)]()
+[![Platform](https://img.shields.io/badge/Platform-Andriod%20%7C%20iOS%20%7C%20Win%20%7C%20Linux%20%7C%20WSL%20%7C%20macOS-lightgrey)]()
 
 **AutoTrac** is developed and maintained by **Sloths Intel**, is a lightweight, mobile-first **time tracking and income tracking PWA** designed for freelancers, consultants, and small teams.
 It focuses on **clarity, low friction, and offline-friendly workflows**, with automatic aggregation and simple financial insights.
