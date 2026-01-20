@@ -106,7 +106,7 @@ function makeLastNDaysKeys(n: number) {
   return keys;
 }
 
-type DailyRow = { date: string; [projectName: string]: number };
+type DailyRow = { date: string } & Record<string, number | string>;
 
 const emptyDailyRow = (date: string, projectNames: string[]): DailyRow => {
   const row: DailyRow = { date };
