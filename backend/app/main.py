@@ -4,7 +4,10 @@ from __future__ import annotations
 import csv
 import io
 import os
+import secrets
+import smtplib
 from datetime import datetime, timedelta
+from email.message import EmailMessage
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Response
@@ -17,11 +20,7 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from .db import Base, SessionLocal, engine
 
-import smtplib
-from email.message import EmailMessage
-
-
-# create tables (NOTE: does not perform migrations; you already ran SQL migration)
+# create tables (NOTE: does not perform migrations)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AutoTrac backend AUTH ENABLED")
@@ -31,14 +30,9 @@ app = FastAPI(title="AutoTrac backend AUTH ENABLED")
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-
-    # production frontend
     "https://autotrac.slothsintel.com",
-
-    # Render frontend (VERY IMPORTANT)
     "https://autotrac-35sx.onrender.com",
 ]
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,7 +43,6 @@ app.add_middleware(
 
 # ---------------- DB dependency ----------------
 
-
 def get_db():
     db = SessionLocal()
     try:
@@ -57,14 +50,9 @@ def get_db():
     finally:
         db.close()
 
-
 # ---------------- Auth config ----------------
 
-SECRET_KEY = os.getenv("SECRET_KEY", "")
-if not SECRET_KEY:
-    # You set SECRET_KEY in Render now; keep a dev fallback to avoid local crashes.
-    SECRET_KEY = "dev-secret-change-me"
-
+SECRET_KEY = os.getenv("SECRET_KEY", "") or "dev-secret-change-me"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
@@ -105,13 +93,6 @@ def get_current_user(
     return user
 
 
-# ---------------- Fingerprint (debug) ----------------
-
-@app.get("/__whoami")
-def __whoami():
-    return {"loaded_from": "backend/app/main.py", "auth_expected": True}
-
-
 # ---------------- Health ----------------
 
 @app.get("/")
@@ -123,13 +104,16 @@ def root():
         "time": datetime.utcnow().isoformat(),
     }
 
-# ---------------- smtp email helpers ----------------
 
-def _send_registration_email(to_email: str) -> None:
-    """
-    Sends a simple confirmation email after successful registration.
-    Uses SMTP_* and EMAIL_FROM env vars (already set in Render).
-    """
+# ---------------- Email verification helpers ----------------
+
+VERIFY_TTL_HOURS = int(os.getenv("VERIFY_TTL_HOURS", "24"))
+PUBLIC_APP_URL = os.getenv("PUBLIC_APP_URL", "https://autotrac.slothsintel.com")
+
+def _make_verify_token() -> str:
+    return secrets.token_urlsafe(32)
+
+def _send_verify_email(to_email: str, token: str) -> None:
     smtp_host = os.getenv("SMTP_HOST", "")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER", "")
@@ -139,26 +123,27 @@ def _send_registration_email(to_email: str) -> None:
     if not (smtp_host and smtp_user and smtp_pass):
         raise RuntimeError("SMTP not configured (SMTP_HOST/USER/PASS missing)")
 
-    msg = EmailMessage()
-    msg["Subject"] = "Welcome to AutoTrac"
-    msg["From"] = email_from  # can be info@ alias
-    msg["To"] = to_email
+    link = f"{PUBLIC_APP_URL.rstrip('/')}/verify?token={token}"
 
-    # Optional but nice: make replies go to the alias
+    msg = EmailMessage()
+    msg["Subject"] = "Confirm your AutoTrac account"
+    msg["From"] = email_from
+    msg["To"] = to_email
     msg["Reply-To"] = email_from
 
     msg.set_content(
-        "Thank you for registering for AutoTrac.\n\n"
-        "Your account has been created successfully.\n\n"
-        "Enjoy your time tracking!\n\n"
-        "— from Sloths Intel.\n"
+        "Welcome to AutoTrac!\n\n"
+        "Please confirm your email address by opening this link:\n"
+        f"{link}\n\n"
+        f"This link expires in {VERIFY_TTL_HOURS} hours.\n\n"
+        "— Sloths Intel\n"
     )
 
     with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as s:
         s.ehlo()
         s.starttls()
         s.ehlo()
-        s.login(smtp_user, smtp_pass)  # ✅ authenticates as sloth@ mailbox
+        s.login(smtp_user, smtp_pass)
         s.send_message(msg)
 
 
@@ -174,20 +159,50 @@ def register(body: schemas.UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    u = models.User(email=email, password_hash=_hash_password(body.password))
+    token = _make_verify_token()
+    expires = datetime.utcnow() + timedelta(hours=VERIFY_TTL_HOURS)
+
+    u = models.User(
+        email=email,
+        password_hash=_hash_password(body.password),
+        is_verified=False,
+        verify_token=token,
+        verify_token_expires_at=expires,
+    )
     db.add(u)
     db.commit()
     db.refresh(u)
 
-    # ✅ send confirmation email (do not block registration if email fails)
+    # send email AFTER commit so the user exists even if email fails
     try:
-        _send_registration_email(email)
+        _send_verify_email(email, token)
+        print(f"[email] verify email sent to {email}")
     except Exception as e:
-        # keep registration successful; just log for now
-        print(f"[email] failed to send registration email to {email}: {e}")
+        # Keep registration successful (minimal disruption), but log loudly
+        print(f"[email] failed to send verify email to {email}: {e}")
 
     return u
 
+
+@app.get("/auth/verify", response_model=schemas.VerifyResult)
+def verify_email(token: str, db: Session = Depends(get_db)):
+    u = db.query(models.User).filter(models.User.verify_token == token).first()
+    if not u:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+
+    if u.is_verified:
+        # already verified; make it idempotent
+        return {"ok": True}
+
+    if u.verify_token_expires_at and datetime.utcnow() > u.verify_token_expires_at:
+        raise HTTPException(status_code=400, detail="Verification token expired")
+
+    u.is_verified = True
+    u.verify_token = None
+    u.verify_token_expires_at = None
+    db.commit()
+
+    return {"ok": True}
 
 
 @app.post("/auth/login", response_model=schemas.Token)
@@ -196,6 +211,9 @@ def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
     u = db.query(models.User).filter(models.User.email == email).first()
     if not u or not _verify_password(body.password, u.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if not u.is_verified:
+        raise HTTPException(status_code=403, detail="Please verify your email before logging in")
 
     token = _create_access_token(u.id)
     return {"access_token": token, "token_type": "bearer"}
@@ -227,7 +245,6 @@ def create_project(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # prevent duplicates by name (PER USER)
     existing = (
         db.query(models.Project)
         .filter(models.Project.user_id == user.id)
@@ -263,8 +280,6 @@ def delete_project(
     if not proj:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # children should cascade if your SQLAlchemy relationships are set to cascade.
-    # Keeping explicit deletes for safety/backward compatibility:
     db.query(models.TimeEntry).filter(
         models.TimeEntry.project_id == project_id,
         models.TimeEntry.user_id == user.id,
@@ -291,7 +306,6 @@ def list_time_entries(
     q = db.query(models.TimeEntry).filter(models.TimeEntry.user_id == user.id)
 
     if project_id is not None:
-        # ensure project belongs to user
         proj = (
             db.query(models.Project)
             .filter(models.Project.id == project_id)
@@ -311,7 +325,6 @@ def create_time_entry(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # ensure project exists and belongs to user
     project = (
         db.query(models.Project)
         .filter(models.Project.id == entry.project_id)

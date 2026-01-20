@@ -18,6 +18,7 @@ class UserPublic(BaseModel):
     id: int
     email: EmailStr
     created_at: datetime
+    is_verified: bool  # ✅ handy for debugging /auth/me
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -30,6 +31,10 @@ class Token(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+
+class VerifyResult(BaseModel):
+    ok: bool
 
 
 # ---------------- Projects ----------------

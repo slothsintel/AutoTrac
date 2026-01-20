@@ -13,7 +13,7 @@ export default function Auth({ onAuthed }: { onAuthed: () => void }) {
     try {
       return new TextEncoder().encode(password).length;
     } catch {
-      return password.length; // fallback
+      return password.length;
     }
   }, [password]);
 
@@ -29,6 +29,12 @@ export default function Auth({ onAuthed }: { onAuthed: () => void }) {
 
       if (mode === "register") {
         await api.post(endpoints.register, { email, password });
+
+        // ✅ Do NOT auto-login. User must verify first.
+        setErr("✅ Account created. Please check your inbox to verify your email, log in, and enjoy income tracking!");
+        setMode("login");
+        setBusy(false);
+        return;
       }
 
       const res = await api.post(endpoints.login, { email, password });
@@ -54,7 +60,10 @@ export default function Auth({ onAuthed }: { onAuthed: () => void }) {
           </div>
           <button
             className="text-sm underline text-neutral-600 dark:text-neutral-300"
-            onClick={() => setMode(mode === "login" ? "register" : "login")}
+            onClick={() => {
+              setErr(null);
+              setMode(mode === "login" ? "register" : "login");
+            }}
             disabled={busy}
           >
             {mode === "login" ? "Register" : "Login"}
@@ -106,7 +115,7 @@ export default function Auth({ onAuthed }: { onAuthed: () => void }) {
         </button>
 
         <div className="mt-3 text-[11px] text-neutral-500">
-          MVP A: one device token, no password reset yet.
+          You must verify your email before logging in.
         </div>
       </div>
     </div>

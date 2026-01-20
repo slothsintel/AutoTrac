@@ -1,5 +1,5 @@
 // frontend/src/App.tsx
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Home from "./pages/Home";
 import Track from "./pages/Track";
@@ -8,6 +8,7 @@ import Incomes from "./pages/Incomes";
 import More from "./pages/More";
 import BottomNav from "./components/BottomNav";
 import Auth from "./pages/Auth";
+import Verify from "./pages/Verify";
 import api, { endpoints, getToken, clearToken } from "./api";
 
 export default function App() {
@@ -48,14 +49,20 @@ export default function App() {
     );
   }
 
+  // ✅ Public routes always available: /verify + / (Auth)
   if (!authed) {
     return (
       <div className="min-h-[100svh] bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
-        <Auth onAuthed={() => void check()} />
+        <Routes>
+          <Route path="/verify" element={<Verify />} />
+          <Route path="/" element={<Auth onAuthed={() => void check()} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
     );
   }
 
+  // ✅ Authed app
   return (
     <div className="min-h-[100svh] bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 flex flex-col">
       <main className="flex-1 pb-16">
@@ -65,6 +72,8 @@ export default function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/incomes" element={<Incomes />} />
           <Route path="/more" element={<More />} />
+          <Route path="/verify" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <BottomNav />

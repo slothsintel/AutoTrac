@@ -259,10 +259,9 @@ Render automatically redeploys the backend service.
 # Roadmap
 
 - CSV export (time & income)
-- Project archiving
 - Monthly summaries
-- Team / shared projects
 - iOS / Android store packaging
+- Team / shared projects
 
 ---
 
