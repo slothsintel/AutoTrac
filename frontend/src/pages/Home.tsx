@@ -106,7 +106,7 @@ function makeLastNDaysKeys(n: number) {
   return keys;
 }
 
-type DailyRow = { date: string } & Record<Exclude<string, "date">, number>;
+type DailyRow = { date: string } & Record<string, number | string>;
 
 const emptyDailyRow = (date: string, projectNames: string[]): DailyRow => {
   const row: DailyRow = { date };
@@ -704,7 +704,9 @@ export default function Home() {
 
       const durationHours = (end.getTime() - start.getTime()) / 1000 / 3600;
       const row = rows.get(dayKey)!;
-      row[pname] = (row[pname] ?? 0) + Math.max(0, durationHours)
+      const prev = typeof row[pname] === "number" ? row[pname] : 0;
+      row[pname] = prev + Math.max(0, durationHours);
+
     }
 
     return Array.from(rows.values());
@@ -723,7 +725,9 @@ export default function Home() {
 
       const gbp = toGBP(inc.amount, inc.currency, fxRates);
       const row = rows.get(dayKey)!;
-      row[pname] = (row[pname] ?? 0) + (gbp ?? 0);
+      const prev = typeof row[pname] === "number" ? row[pname] : 0;
+      row[pname] = prev + (gbp ?? 0);
+
     }
 
     return Array.from(rows.values());
