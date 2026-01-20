@@ -29,15 +29,6 @@ type Income = {
   source?: string | null;
 };
 
-const FIXED = ["AutoVisuals", "AutoTrac", "AutoStock"] as const;
-type FixedProject = (typeof FIXED)[number];
-
-const PROJECT_COLORS: Record<FixedProject, string> = {
-  AutoVisuals: "#ec4899",
-  AutoTrac: "#3b82f6",
-  AutoStock: "#22c55e",
-};
-
 const DAYS = 30;
 
 // ---------- FX (Frankfurter, browser-friendly) ----------
@@ -89,11 +80,7 @@ async function fetchRateToGBP(curRaw: string): Promise<number> {
   return rate;
 }
 
-function toGBP(
-  amount: number,
-  currency?: string | null,
-  rates?: FxRates
-): number | null {
+function toGBP(amount: number, currency?: string | null, rates?: FxRates): number | null {
   const cur = normCur(currency);
   const v = Number(amount) || 0;
   if (cur === "GBP") return v;
@@ -119,13 +106,13 @@ function makeLastNDaysKeys(n: number) {
   return keys;
 }
 
-type DailyRow = { date: string } & Record<FixedProject, number>;
-const emptyDailyRow = (date: string): DailyRow => ({
-  date,
-  AutoVisuals: 0,
-  AutoTrac: 0,
-  AutoStock: 0,
-});
+type DailyRow = { date: string; [projectName: string]: number };
+
+const emptyDailyRow = (date: string, projectNames: string[]): DailyRow => {
+  const row: DailyRow = { date };
+  for (const n of projectNames) row[n] = 0;
+  return row;
+};
 
 // ---------- ggplot-ish styling helpers ----------
 const GG = {
@@ -134,6 +121,26 @@ const GG = {
   tooltipBg: "rgba(255,255,255,0.95)",
   tooltipBorder: "#e5e7eb",
 };
+
+// Stable palette + deterministic mapping by project name
+const DEFAULT_COLORS = [
+  "#3b82f6", // blue
+  "#22c55e", // green
+  "#ec4899", // pink
+  "#f59e0b", // amber
+  "#8b5cf6", // violet
+  "#14b8a6", // teal
+  "#ef4444", // red
+  "#6366f1", // indigo
+];
+
+function colorForProject(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return DEFAULT_COLORS[Math.abs(hash) % DEFAULT_COLORS.length];
+}
 
 function formatShortDate(iso: string) {
   const d = new Date(iso + "T00:00:00");
@@ -159,7 +166,7 @@ const GgTooltip = ({ active, payload, label }: any) => {
         fontSize: 12,
         color: "#111827",
         boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-        minWidth: 160,
+        minWidth: 180,
       }}
     >
       <div style={{ fontWeight: 700, marginBottom: 6 }}>
@@ -236,15 +243,10 @@ function ManualTimeModal(props: {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fixedProjects = useMemo(() => {
-    const fixed = projects.filter((p) => FIXED.includes(p.name as FixedProject));
-    return fixed.length ? fixed : projects;
-  }, [projects]);
-
   const defaultProjectId = useMemo(() => {
-    const first = fixedProjects?.[0]?.id;
+    const first = projects?.[0]?.id;
     return first != null ? String(first) : "";
-  }, [fixedProjects]);
+  }, [projects]);
 
   const [draft, setDraft] = useState<ManualDraft>(() => ({
     projectId: "",
@@ -397,7 +399,7 @@ function ManualTimeModal(props: {
               <option value="" disabled>
                 Select a project…
               </option>
-              {fixedProjects.map((p) => (
+              {projects.map((p) => (
                 <option key={p.id} value={String(p.id)}>
                   {p.name}
                 </option>
@@ -583,11 +585,9 @@ export default function Home() {
   const [scrollToRightToken, setScrollToRightToken] = useState(0);
 
   const scrollChartsToRight = () => {
-    // Run after DOM/layout updates
     requestAnimationFrame(() => {
       const t = timeScrollRef.current;
       const i = incomeScrollRef.current;
-
       if (t) t.scrollLeft = t.scrollWidth;
       if (i) i.scrollLeft = i.scrollWidth;
     });
@@ -605,7 +605,6 @@ export default function Home() {
       setIncomes(iRes.data as Income[]);
 
       if (opts?.scrollCharts) {
-        // trigger an effect after state updates settle
         setScrollToRightToken((n) => n + 1);
       }
     } catch (err) {
@@ -635,8 +634,6 @@ export default function Home() {
   // ✅ whenever token bumps (initial load, Refresh button, manual save), jump to right
   useEffect(() => {
     if (scrollToRightToken <= 0) return;
-
-    // Two RAFs = safer for ResponsiveContainer layout + width calc
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         scrollChartsToRight();
@@ -688,14 +685,17 @@ export default function Home() {
 
   const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
 
+  const projectNames = useMemo(() => projects.map((p) => p.name), [projects]);
+
   const dailyTimeData: DailyRow[] = useMemo(() => {
     const rows = new Map<string, DailyRow>();
-    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day));
+    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day, projectNames));
 
     for (const e of timeEntries) {
       if (!e.end_time) continue;
-      const pname = projectMap[e.project_id] as FixedProject | undefined;
-      if (!pname || !(pname in PROJECT_COLORS)) continue;
+
+      const pname = projectMap[e.project_id];
+      if (!pname) continue;
 
       const start = new Date(e.start_time);
       const end = new Date(e.end_time);
@@ -703,59 +703,53 @@ export default function Home() {
       if (!rows.has(dayKey)) continue;
 
       const durationHours = (end.getTime() - start.getTime()) / 1000 / 3600;
-      rows.get(dayKey)![pname] += Math.max(0, durationHours);
+      const row = rows.get(dayKey)!;
+      row[pname] = (row[pname] || 0) + Math.max(0, durationHours);
     }
 
     return Array.from(rows.values());
-  }, [timeEntries, projectMap, lastNDaysKeys]);
+  }, [timeEntries, projectMap, lastNDaysKeys, projectNames]);
 
   const dailyIncomeData: DailyRow[] = useMemo(() => {
     const rows = new Map<string, DailyRow>();
-    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day));
+    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day, projectNames));
 
     for (const inc of incomes) {
-      const pname = projectMap[inc.project_id] as FixedProject | undefined;
-      if (!pname || !(pname in PROJECT_COLORS)) continue;
+      const pname = projectMap[inc.project_id];
+      if (!pname) continue;
 
       const dayKey = toDayKey(new Date(inc.date));
       if (!rows.has(dayKey)) continue;
 
       const gbp = toGBP(inc.amount, inc.currency, fxRates);
-      rows.get(dayKey)![pname] += gbp ?? 0; // 0 until FX ready
+      const row = rows.get(dayKey)!;
+      row[pname] = (row[pname] || 0) + (gbp ?? 0); // 0 until FX ready
     }
 
     return Array.from(rows.values());
-  }, [incomes, projectMap, lastNDaysKeys, fxRates]);
+  }, [incomes, projectMap, lastNDaysKeys, fxRates, projectNames]);
 
   function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
-    const totals: Record<FixedProject, number> = {
-      AutoVisuals: 0,
-      AutoTrac: 0,
-      AutoStock: 0,
-    };
-
+    const totals: Record<string, number> = {};
     const now = Date.now();
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
 
     for (const e of entries) {
       if (!e.end_time) continue;
-      const start = new Date(e.start_time).getTime();
-      if (start < sevenDaysAgo) continue;
+      const startMs = new Date(e.start_time).getTime();
+      if (startMs < sevenDaysAgo) continue;
 
-      const durationSec = (new Date(e.end_time).getTime() - start) / 1000;
-      const name = projectMap[e.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) totals[name] += durationSec;
+      const name = projectMap[e.project_id];
+      if (!name) continue;
+
+      const durationSec = (new Date(e.end_time).getTime() - startMs) / 1000;
+      totals[name] = (totals[name] || 0) + Math.max(0, durationSec);
     }
     return totals;
   }
 
   function calculateWeeklyIncomeTotals(list: Income[]) {
-    const totals: Record<FixedProject, number> = {
-      AutoVisuals: 0,
-      AutoTrac: 0,
-      AutoStock: 0,
-    };
-
+    const totals: Record<string, number> = {};
     const now = Date.now();
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
 
@@ -763,11 +757,11 @@ export default function Home() {
       const d = new Date(inc.date).getTime();
       if (d < sevenDaysAgo) continue;
 
-      const name = projectMap[inc.project_id] as FixedProject | undefined;
-      if (name && totals[name] != null) {
-        const gbp = toGBP(inc.amount, inc.currency, fxRates);
-        totals[name] += gbp ?? 0;
-      }
+      const name = projectMap[inc.project_id];
+      if (!name) continue;
+
+      const gbp = toGBP(inc.amount, inc.currency, fxRates);
+      totals[name] = (totals[name] || 0) + (gbp ?? 0);
     }
     return totals;
   }
@@ -779,13 +773,6 @@ export default function Home() {
     const h = Math.floor(sec / 3600);
     const m = Math.floor((sec % 3600) / 60);
     return `${h}h ${m}m`;
-  };
-
-  const projectColorClass = (name?: string) => {
-    if (name === "AutoVisuals") return "text-pink-500";
-    if (name === "AutoTrac") return "text-blue-500";
-    if (name === "AutoStock") return "text-green-500";
-    return "text-neutral-900 dark:text-neutral-100";
   };
 
   const recentIncomes = useMemo(() => {
@@ -837,14 +824,13 @@ export default function Home() {
             setFilter(e.target.value);
             setScrollToRightToken((n) => n + 1);
           }}
-
           className="flex-1 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
         >
           <option value="All">All projects</option>
-          {FIXED.map((p) => (
-            <option key={p} value={p}>
-              {p}
+          {projects.map((p) => (
+            <option key={p.id} value={p.name}>
+              {p.name}
             </option>
           ))}
         </select>
@@ -885,7 +871,6 @@ export default function Home() {
               Daily time (hours) — stacked by project
             </p>
 
-            {/* Light chart panel + horizontal scroll */}
             <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
               <div className="overflow-x-auto" ref={timeScrollRef}>
                 <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
@@ -927,27 +912,16 @@ export default function Home() {
                           }}
                         />
 
-                        <Bar
-                          dataKey="AutoStock"
-                          stackId="time"
-                          fill={PROJECT_COLORS.AutoStock}
-                          radius={[6, 6, 0, 0]}
-                          fillOpacity={0.85}
-                        />
-                        <Bar
-                          dataKey="AutoTrac"
-                          stackId="time"
-                          fill={PROJECT_COLORS.AutoTrac}
-                          radius={[6, 6, 0, 0]}
-                          fillOpacity={0.85}
-                        />
-                        <Bar
-                          dataKey="AutoVisuals"
-                          stackId="time"
-                          fill={PROJECT_COLORS.AutoVisuals}
-                          radius={[6, 6, 0, 0]}
-                          fillOpacity={0.85}
-                        />
+                        {projects.map((p) => (
+                          <Bar
+                            key={p.id}
+                            dataKey={p.name}
+                            stackId="time"
+                            fill={colorForProject(p.name)}
+                            radius={[6, 6, 0, 0]}
+                            fillOpacity={0.85}
+                          />
+                        ))}
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -965,7 +939,6 @@ export default function Home() {
               Daily income (£) — stacked by project (auto FX)
             </p>
 
-            {/* Light chart panel + horizontal scroll */}
             <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
               <div className="overflow-x-auto" ref={incomeScrollRef}>
                 <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
@@ -1007,27 +980,16 @@ export default function Home() {
                           }}
                         />
 
-                        <Bar
-                          dataKey="AutoStock"
-                          stackId="income"
-                          fill={PROJECT_COLORS.AutoStock}
-                          radius={[6, 6, 0, 0]}
-                          fillOpacity={0.85}
-                        />
-                        <Bar
-                          dataKey="AutoTrac"
-                          stackId="income"
-                          fill={PROJECT_COLORS.AutoTrac}
-                          radius={[6, 6, 0, 0]}
-                          fillOpacity={0.85}
-                        />
-                        <Bar
-                          dataKey="AutoVisuals"
-                          stackId="income"
-                          fill={PROJECT_COLORS.AutoVisuals}
-                          radius={[6, 6, 0, 0]}
-                          fillOpacity={0.85}
-                        />
+                        {projects.map((p) => (
+                          <Bar
+                            key={p.id}
+                            dataKey={p.name}
+                            stackId="income"
+                            fill={colorForProject(p.name)}
+                            radius={[6, 6, 0, 0]}
+                            fillOpacity={0.85}
+                          />
+                        ))}
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1043,33 +1005,34 @@ export default function Home() {
       </FeedCard>
 
       <FeedCard title="This week (last 7 days)">
-        <ul className="space-y-2 text-sm">
-          {FIXED.map((name) => (
-            <li key={name} className="flex justify-between items-center">
-              <span
-                className={
-                  name === "AutoVisuals"
-                    ? "font-medium text-pink-500"
-                    : name === "AutoTrac"
-                    ? "font-medium text-blue-500"
-                    : "font-medium text-green-500"
-                }
-              >
-                {name}
-              </span>
-              <span className="text-xs text-neutral-600 dark:text-neutral-400">
-                ⏱ {fmtHours(weeklyTimeTotals[name])} · 💰 £
-                {weeklyIncomeTotals[name].toFixed(2)}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {projects.length === 0 ? (
+          <div className="text-sm text-neutral-500">No projects yet.</div>
+        ) : (
+          <ul className="space-y-2 text-sm">
+            {projects.map((p) => (
+              <li key={p.id} className="flex justify-between items-center">
+                <span
+                  className="font-medium"
+                  style={{ color: colorForProject(p.name) }}
+                >
+                  {p.name}
+                </span>
+                <span className="text-xs text-neutral-600 dark:text-neutral-400">
+                  ⏱ {fmtHours(weeklyTimeTotals[p.name] || 0)} · 💰 £
+                  {(weeklyIncomeTotals[p.name] || 0).toFixed(2)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </FeedCard>
 
       <FeedCard title="Recent time entries" subtitle="Latest 10">
         <ul className="space-y-2">
           {recentTimeEntries.map((e) => {
             const pname = projectMap[e.project_id] || `Project #${e.project_id}`;
+            const color = projectMap[e.project_id] ? colorForProject(pname) : undefined;
+
             return (
               <li
                 key={e.id}
@@ -1077,7 +1040,7 @@ export default function Home() {
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className={projectColorClass(pname)}>
+                  <div style={color ? { color } : undefined}>
                     {pname} · #{e.id}
                   </div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">
@@ -1105,6 +1068,7 @@ export default function Home() {
             const pname = projectMap[i.project_id] || `Project #${i.project_id}`;
             const cur = normCur(i.currency);
             const gbp = toGBP(i.amount, i.currency, fxRates);
+            const color = projectMap[i.project_id] ? colorForProject(pname) : undefined;
 
             return (
               <li
@@ -1113,7 +1077,7 @@ export default function Home() {
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className={projectColorClass(pname)}>
+                  <div style={color ? { color } : undefined}>
                     {pname} · #{i.id}
                   </div>
                   <div className="text-xs text-neutral-600 dark:text-neutral-400">

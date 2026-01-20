@@ -27,7 +27,6 @@ const TimerIcon = (
   </svg>
 );
 
-const FIXED = ["AutoVisuals", "AutoTrac", "AutoStock"] as const;
 
 export default function Track() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -172,11 +171,12 @@ export default function Track() {
         <option value="" disabled>
           Select project…
         </option>
-        {FIXED.map((name) => (
-          <option key={name} value={name}>
-            {name}
+        {projects.map((p) => (
+          <option key={p.id} value={p.name}>
+            {p.name}
           </option>
         ))}
+
       </select>
 
       {/* NOTE INPUT */}
