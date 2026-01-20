@@ -148,9 +148,10 @@ def _send_registration_email(to_email: str) -> None:
     msg["Reply-To"] = email_from
 
     msg.set_content(
-        "Thanks for registering for AutoTrac.\n\n"
+        "Thank you for registering for AutoTrac.\n\n"
         "Your account has been created successfully.\n\n"
-        "— from Sloths Intel\n"
+        "Enjoy your time tracking!\n\n"
+        "— from Sloths Intel.\n"
     )
 
     with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as s:
