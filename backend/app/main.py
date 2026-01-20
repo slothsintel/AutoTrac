@@ -17,6 +17,10 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from .db import Base, SessionLocal, engine
 
+import smtplib
+from email.message import EmailMessage
+
+
 # create tables (NOTE: does not perform migrations; you already ran SQL migration)
 Base.metadata.create_all(bind=engine)
 
@@ -119,6 +123,43 @@ def root():
         "time": datetime.utcnow().isoformat(),
     }
 
+# ---------------- smtp email helpers ----------------
+
+def _send_registration_email(to_email: str) -> None:
+    """
+    Sends a simple confirmation email after successful registration.
+    Uses SMTP_* and EMAIL_FROM env vars (already set in Render).
+    """
+    smtp_host = os.getenv("SMTP_HOST", "")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_pass = os.getenv("SMTP_PASS", "")
+    email_from = os.getenv("EMAIL_FROM", smtp_user) or smtp_user
+
+    if not (smtp_host and smtp_user and smtp_pass):
+        raise RuntimeError("SMTP not configured (SMTP_HOST/USER/PASS missing)")
+
+    msg = EmailMessage()
+    msg["Subject"] = "Welcome to AutoTrac"
+    msg["From"] = email_from  # can be info@ alias
+    msg["To"] = to_email
+
+    # Optional but nice: make replies go to the alias
+    msg["Reply-To"] = email_from
+
+    msg.set_content(
+        "Thanks for registering for AutoTrac.\n\n"
+        "Your account has been created successfully.\n\n"
+        "— from Sloths Intel\n"
+    )
+
+    with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as s:
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
+        s.login(smtp_user, smtp_pass)  # ✅ authenticates as sloth@ mailbox
+        s.send_message(msg)
+
 
 # ---------------- Auth endpoints ----------------
 
@@ -136,7 +177,16 @@ def register(body: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(u)
     db.commit()
     db.refresh(u)
+
+    # ✅ send confirmation email (do not block registration if email fails)
+    try:
+        _send_registration_email(email)
+    except Exception as e:
+        # keep registration successful; just log for now
+        print(f"[email] failed to send registration email to {email}: {e}")
+
     return u
+
 
 
 @app.post("/auth/login", response_model=schemas.Token)
