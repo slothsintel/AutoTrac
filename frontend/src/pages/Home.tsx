@@ -928,7 +928,7 @@ export default function Home() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+            className="min-w-0 w-[85px] max-w-[85px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
            text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
            truncate"
             title="Year"
@@ -944,7 +944,7 @@ export default function Home() {
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
             disabled={period === "Year"}
-            className="min-w-0 w-[60px] max-w-[60px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+            className="min-w-0 w-[70px] max-w-[70px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
            text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
            disabled:opacity-50 truncate"
             title="Month"
