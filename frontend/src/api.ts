@@ -30,6 +30,10 @@ export const endpoints = {
   login: "/auth/login",
   me: "/auth/me",
 
+  // ✅ password reset
+  forgotPassword: "/auth/forgot-password",
+  resetPassword: "/auth/reset-password",
+
   // core
   projects: "/projects/",
   timeEntries: "/time-entries/",

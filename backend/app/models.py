@@ -36,6 +36,10 @@ class User(Base):
     time_entries = relationship("TimeEntry", back_populates="user", cascade="all, delete-orphan")
     incomes = relationship("IncomeRecord", back_populates="user", cascade="all, delete-orphan")
 
+    reset_token = Column(String(255), nullable=True, index=True)
+    reset_token_expires_at = Column(DateTime, nullable=True)
+
+
 
 class Project(Base):
     __tablename__ = "projects"

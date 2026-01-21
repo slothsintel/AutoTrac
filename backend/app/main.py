@@ -58,6 +58,7 @@ ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+RESET_TTL_HOURS = int(os.getenv("RESET_TTL_HOURS", "1"))
 
 
 def _hash_password(p: str) -> str:
@@ -91,6 +92,43 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user
+
+def make_reset_token() -> str:
+    return secrets.token_urlsafe(32)
+
+def send_reset_email(to_email: str, token: str) -> None:
+    smtp_host = os.getenv("SMTP_HOST", "")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_pass = os.getenv("SMTP_PASS", "")
+    email_from = os.getenv("EMAIL_FROM", smtp_user) or smtp_user
+
+    if not (smtp_host and smtp_user and smtp_pass):
+        raise RuntimeError("SMTP not configured (SMTP_HOST/USER/PASS missing)")
+
+    link = f"{PUBLIC_APP_URL.rstrip('/')}/reset-password?token={token}"
+
+    msg = EmailMessage()
+    msg["Subject"] = "Reset your AutoTrac password"
+    msg["From"] = email_from
+    msg["To"] = to_email
+    msg["Reply-To"] = email_from
+    msg.set_content(
+        "We received a request to reset your AutoTrac password.\n\n"
+        "Open this link to set a new password:\n"
+        f"{link}\n\n"
+        f"This link expires in {RESET_TTL_HOURS} hour(s).\n\n"
+        "If you didn’t request this, you can ignore this email.\n"
+        "— Sloths Intel\n"
+    )
+
+    with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as s:
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
+        s.login(smtp_user, smtp_pass)
+        s.send_message(msg)
+
 
 
 # ---------------- Health ----------------
@@ -223,6 +261,72 @@ def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
 def me(user: models.User = Depends(get_current_user)):
     return user
 
+@app.post("/auth/forgot-password", response_model=schemas.OkResult)
+def forgot_password(body: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    email = body.email.strip().lower()
+    u = db.query(models.User).filter(models.User.email == email).first()
+
+    # Always return ok (prevents revealing whether an email exists)
+    if not u:
+        return {"ok": True}
+
+    token = make_reset_token()
+    expires = datetime.utcnow() + timedelta(hours=RESET_TTL_HOURS)
+
+    u.reset_token = token
+    u.reset_token_expires_at = expires
+    db.commit()
+
+    try:
+        send_reset_email(email, token)
+        print(f"[email] reset email sent to {email}")
+    except Exception as e:
+        print(f"[email] failed to send reset email to {email}: {e}")
+
+    return {"ok": True}
+
+@app.post("/auth/forgot-password", response_model=schemas.OkResult)
+def forgot_password(body: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    email = body.email.strip().lower()
+    u = db.query(models.User).filter(models.User.email == email).first()
+
+    # Always return ok (prevents revealing whether an email exists)
+    if not u:
+        return {"ok": True}
+
+    token = make_reset_token()
+    expires = datetime.utcnow() + timedelta(hours=RESET_TTL_HOURS)
+
+    u.reset_token = token
+    u.reset_token_expires_at = expires
+    db.commit()
+
+    try:
+        send_reset_email(email, token)
+        print(f"[email] reset email sent to {email}")
+    except Exception as e:
+        print(f"[email] failed to send reset email to {email}: {e}")
+
+    return {"ok": True}
+
+@app.post("/auth/reset-password", response_model=schemas.OkResult)
+def reset_password(body: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
+    if len(body.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    u = db.query(models.User).filter(models.User.reset_token == body.token).first()
+    if not u:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+
+    if u.reset_token_expires_at and datetime.utcnow() > u.reset_token_expires_at:
+        raise HTTPException(status_code=400, detail="Reset token expired")
+
+    u.password_hash = _hash_password(body.new_password)
+    u.reset_token = None
+    u.reset_token_expires_at = None
+    db.commit()
+
+    return {"ok": True}
 
 # ---------------- Projects ----------------
 

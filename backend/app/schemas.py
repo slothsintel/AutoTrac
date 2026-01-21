@@ -13,6 +13,16 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+class OkResult(BaseModel):
+    ok: bool
+
 
 class UserPublic(BaseModel):
     id: int

@@ -9,6 +9,9 @@ import More from "./pages/More";
 import BottomNav from "./components/BottomNav";
 import Auth from "./pages/Auth";
 import Verify from "./pages/Verify";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+
 import api, { endpoints, getToken, clearToken } from "./api";
 
 export default function App() {
@@ -54,8 +57,15 @@ export default function App() {
     return (
       <div className="min-h-[100svh] bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
         <Routes>
+          {/* public auth-related routes */}
           <Route path="/verify" element={<Verify />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* default auth screen */}
           <Route path="/" element={<Auth onAuthed={() => void check()} />} />
+
+          {/* fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
