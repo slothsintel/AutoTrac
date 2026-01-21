@@ -118,7 +118,7 @@ def send_reset_email(to_email: str, token: str) -> None:
         "Open this link to set a new password:\n"
         f"{link}\n\n"
         f"This link expires in {RESET_TTL_HOURS} hour(s).\n\n"
-        "If you didn’t request this, you can ignore this email.\n"
+        "If you didn’t request this, you can ignore this email or report to us (mailto:info@slothsintel.com).\n"
         "— Sloths Intel\n"
     )
 
