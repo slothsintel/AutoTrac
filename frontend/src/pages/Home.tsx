@@ -898,11 +898,11 @@ export default function Home() {
               setFilter(e.target.value);
               setScrollToRightToken((n) => n + 1);
             }}
-            className="flex-1 min-w-0 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+            className="min-w-0 w-[120px] max-w-[120px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
            text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
            truncate"
           >
-            <option value="All">All projects</option>
+            <option value="All">All</option>
             {projects.map((p) => (
               <option key={p.id} value={p.name}>
                 {p.name}
@@ -916,7 +916,7 @@ export default function Home() {
               setPeriod(e.target.value as "Month" | "Year");
               setScrollToRightToken((n) => n + 1);
             }}
-            className="min-w-0 w-[120px] max-w-[120px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
            text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
            truncate"
             title="Period"
