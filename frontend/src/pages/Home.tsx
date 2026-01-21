@@ -1171,15 +1171,15 @@ export default function Home() {
               Daily time (hours) — stacked by project
             </p>
 
-            <div className="rounded-2xl bg-white dark:bg-neutral-900 p-2 shadow-sm border border-neutral-200 dark:border-neutral-800">
+           <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
               {/* ✅ Fixed legend */}
-              <div className="sticky top-0 z-10 bg-white dark:bg-neutral-900 pb-2">
+              <div className="sticky top-0 z-10 bg-white pb-2">
                 <FixedLegend projects={projects} />
               </div>
 
               <div className="flex items-stretch">
                 {/* ✅ Fixed Y-axis */}
-                <div className="sticky left-0 z-10 bg-white dark:bg-neutral-900 pr-2">
+                <div className="sticky left-0 z-10 bg-white pr-2">
                   <div className="h-56 w-[40px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
