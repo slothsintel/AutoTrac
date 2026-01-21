@@ -891,15 +891,16 @@ export default function Home() {
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
       <div className="mb-4 space-y-2">
         {/* Row 1: filters */}
-        <div className="flex gap-2 flex-nowrap overflow-x-auto">
+        <div className="flex gap-2 flex-nowrap">
           <select
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
               setScrollToRightToken((n) => n + 1);
             }}
-            className="flex-1 min-w-[140px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+           truncate"
           >
             <option value="All">All projects</option>
             {projects.map((p) => (
@@ -915,8 +916,9 @@ export default function Home() {
               setPeriod(e.target.value as "Month" | "Year");
               setScrollToRightToken((n) => n + 1);
             }}
-            className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+            className="min-w-0 w-[120px] max-w-[120px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+           truncate"
             title="Period"
           >
             <option value="Month">By month</option>
@@ -926,8 +928,9 @@ export default function Home() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+            className="min-w-0 w-[90px] max-w-[90px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+           truncate"
             title="Year"
           >
             {yearOptions.map((y) => (
@@ -941,9 +944,9 @@ export default function Home() {
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
             disabled={period === "Year"}
-            className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
-                      disabled:opacity-50"
+            className="min-w-0 w-[90px] max-w-[90px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+           disabled:opacity-50 truncate"
             title="Month"
           >
             {monthOptions.map((m) => (
