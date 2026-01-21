@@ -891,7 +891,7 @@ export default function Home() {
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
       <div className="mb-4 space-y-2">
         {/* Row 1: filters */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-nowrap overflow-x-auto">
           <select
             value={filter}
             onChange={(e) => {
