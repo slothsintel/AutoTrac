@@ -260,6 +260,7 @@ Render automatically redeploys the backend service.
 
 - CSV export (time & income)
 - Monthly summaries
+- biometric login
 - iOS / Android store packaging
 - Team / shared projects
 
@@ -279,7 +280,7 @@ A financial brand under [**Sloths Intel**](https://slothsintel.com), specialisin
 
 # License
 
-© 2025–2026 **Sloths Intel**.
+© 2026 **Sloths Intel**.
 
 A trading name of **Sloths Intel Ltd**
 Registered in England and Wales (Company No. 16907507).
