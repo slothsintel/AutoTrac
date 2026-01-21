@@ -887,6 +887,161 @@ export default function Home() {
     }
   };
 
+    // ✅ export payload
+    const exportPayload = useMemo(() => {
+    const projectIdByName: Record<string, number> = {};
+    for (const p of projects) projectIdByName[p.name] = p.id;
+
+    const allowedProjectIds =
+      filter === "All"
+        ? new Set(projects.map((p) => p.id))
+        : new Set([projectIdByName[filter]].filter((x) => Number.isFinite(x)));
+
+    const keySet = new Set(xKeys);
+
+    const timeFiltered = timeEntries.filter((e) => {
+      if (!allowedProjectIds.has(e.project_id)) return false;
+
+      const start = new Date(e.start_time);
+      const key = period === "Year" ? toMonthKey(start) : toDayKey(start);
+      return keySet.has(key);
+    });
+
+    const incomesFiltered = incomes.filter((i) => {
+      if (!allowedProjectIds.has(i.project_id)) return false;
+
+      const d = new Date(i.date);
+      const key = period === "Year" ? toMonthKey(d) : toDayKey(d);
+      return keySet.has(key);
+    });
+
+    return {
+      meta: {
+        exported_at: new Date().toISOString(),
+        filter,
+        period,
+        selectedYear,
+        selectedMonth: period === "Year" ? null : selectedMonth,
+      },
+      projects: projects.filter((p) => allowedProjectIds.has(p.id)),
+      time_entries: timeFiltered,
+      incomes: incomesFiltered,
+    };
+  }, [projects, timeEntries, incomes, filter, period, selectedYear, selectedMonth, xKeys]);
+
+  const makeExportBaseName = () => {
+    const label =
+      period === "Year"
+        ? `${selectedYear}`
+        : `${selectedYear}-${pad2(selectedMonth)}`;
+
+    const proj = filter === "All" ? "" : `_${filter.replace(/\s+/g, "_")}`;
+    return `autotrac_export_${period.toLowerCase()}_${label}${proj}`;
+  };
+
+  const downloadTextFile = (filename: string, content: string, mime: string) => {
+    const blob = new Blob([content], { type: `${mime};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const csvEscape = (v: any) => {
+    if (v === null || v === undefined) return "";
+    const s = String(v);
+    // escape quotes and wrap if needed
+    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
+
+  const toCsv = (headers: string[], rows: any[][]) => {
+    const head = headers.map(csvEscape).join(",");
+    const body = rows.map((r) => r.map(csvEscape).join(",")).join("\n");
+    return `${head}\n${body}\n`;
+  };
+
+  const exportJson = () => {
+    try {
+      const base = makeExportBaseName();
+      downloadTextFile(
+        `${base}.json`,
+        JSON.stringify(exportPayload, null, 2),
+        "application/json"
+      );
+    } catch (e) {
+      console.error("Export JSON failed:", e);
+      alert("Export failed. Please try again.");
+    }
+  };
+
+  const exportCsv = () => {
+    try {
+      const base = makeExportBaseName();
+
+      // Projects
+      const projectsCsv = toCsv(
+        ["id", "name"],
+        exportPayload.projects.map((p: any) => [p.id, p.name])
+      );
+      downloadTextFile(`${base}_projects.csv`, projectsCsv, "text/csv");
+
+      // Time entries
+      const projectNameById: Record<number, string> = {};
+      for (const p of exportPayload.projects as any[]) projectNameById[p.id] = p.name;
+
+      const timeRows = (exportPayload.time_entries as any[]).map((e) => {
+        const start = e.start_time ? new Date(e.start_time).getTime() : null;
+        const end = e.end_time ? new Date(e.end_time).getTime() : null;
+        const hours =
+          start !== null && end !== null ? Math.max(0, (end - start) / 3600000) : "";
+        return [
+          e.id,
+          e.project_id,
+          projectNameById[e.project_id] || "",
+          e.start_time,
+          e.end_time ?? "",
+          hours,
+        ];
+      });
+
+      const timeCsv = toCsv(
+        ["id", "project_id", "project_name", "start_time", "end_time", "duration_hours"],
+        timeRows
+      );
+      downloadTextFile(`${base}_time_entries.csv`, timeCsv, "text/csv");
+
+      // Incomes
+      const incomeRows = (exportPayload.incomes as any[]).map((i) => {
+        const gbp = toGBP(i.amount, i.currency, fxRates);
+        return [
+          i.id,
+          i.project_id,
+          projectNameById[i.project_id] || "",
+          i.date,
+          i.amount,
+          i.currency ?? "",
+          gbp ?? "",
+        ];
+      });
+
+      const incomesCsv = toCsv(
+        ["id", "project_id", "project_name", "date", "amount", "currency", "amount_gbp"],
+        incomeRows
+      );
+      downloadTextFile(`${base}_incomes.csv`, incomesCsv, "text/csv");
+    } catch (e) {
+      console.error("Export CSV failed:", e);
+      alert("Export failed. Please try again.");
+    }
+  };
+
+
+
   return (
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
       <div className="mb-4 space-y-2">
@@ -967,6 +1122,24 @@ export default function Home() {
           >
             Manual
           </button>
+
+          <button
+          onClick={exportJson}
+          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
+                    bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          title="Export filtered data as JSON"
+        >
+          Export JSON
+        </button>
+
+        <button
+          onClick={exportCsv}
+          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
+                    bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          title="Export filtered data as CSV"
+        >
+          Export CSV
+        </button>
 
           <button
             onClick={() => loadAll({ scrollCharts: true })}
