@@ -8,91 +8,71 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   CartesianGrid,
 } from "recharts";
 
+type RangeMode = "Week" | "Month" | "Year";
+const RANGE_DEFAULT: RangeMode = "Month";
+const DAYS_WEEK = 7;
+const DAYS_MONTH = 30;
+const MONTHS_YEAR = 12;
+
+// ---------- FX (Frankfurter, browser-friendly) ----------
+type FxRates = Record<string, number>;
+const FX_BASE = "GBP";
+
+function normCur(cur?: string) {
+  return (cur || "GBP").trim().toUpperCase();
+}
+
+async function fetchFxLatest(base = FX_BASE): Promise<FxRates> {
+  const url = `https://api.frankfurter.app/latest?from=${encodeURIComponent(
+    base
+  )}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`FX latest failed: ${res.status}`);
+  const json = await res.json();
+  const rates = json?.rates || {};
+  return { ...rates, [base]: 1 };
+}
+
+function toGBP(amount: number, currency: string | null, rates?: FxRates): number | null {
+  const cur = normCur(currency || "GBP");
+  if (cur === "GBP") return amount;
+  if (!rates || !rates[cur]) return null;
+
+  // Frankfurter: base GBP => rates[cur] is 1 GBP in cur (e.g., 1 GBP = 1.17 USD)
+  // We want amount(cur) -> GBP: GBP = amount / rate
+  const rate = rates[cur];
+  if (!rate || rate <= 0) return null;
+  return amount / rate;
+}
+
+// ---------- Types ----------
 type Project = { id: number; name: string };
 type TimeEntry = {
   id: number;
   project_id: number;
   start_time: string;
   end_time: string | null;
-  note?: string;
 };
 type Income = {
   id: number;
   project_id: number;
-  date: string;
+  date: string; // YYYY-MM-DD
   amount: number;
-  currency?: string | null;
-  source?: string | null;
+  currency: string | null;
 };
 
-const DAYS = 30;
+type DailyRow = { date: string; [projectName: string]: number | string };
 
-// ---------- FX (Frankfurter, browser-friendly) ----------
-type FxRates = Record<string, number>;
-const FX_TTL_MS = 12 * 60 * 60 * 1000;
-const fxKey = (cur: string) => `fx_${cur.toUpperCase()}_GBP_v2`;
-
-function normCur(c?: string | null) {
-  return (c || "GBP").toUpperCase();
+// ---------- Date helpers ----------
+function toDayKey(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
-
-async function fetchRateToGBP(curRaw: string): Promise<number> {
-  const cur = normCur(curRaw);
-  if (cur === "GBP") return 1;
-
-  try {
-    const cached = localStorage.getItem(fxKey(cur));
-    if (cached) {
-      const parsed = JSON.parse(cached) as { rate: number; ts: number };
-      if (
-        parsed &&
-        Number.isFinite(parsed.rate) &&
-        parsed.rate > 0 &&
-        Date.now() - parsed.ts < FX_TTL_MS
-      ) {
-        return parsed.rate;
-      }
-    }
-  } catch {
-    // ignore cache errors
-  }
-
-  const res = await fetch(
-    `https://api.frankfurter.app/latest?from=${encodeURIComponent(cur)}&to=GBP`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) throw new Error(`FX fetch failed: ${res.status}`);
-  const data = await res.json();
-
-  const rate = Number(data?.rates?.GBP);
-  if (!Number.isFinite(rate) || rate <= 0) throw new Error("Bad FX rate");
-
-  try {
-    localStorage.setItem(fxKey(cur), JSON.stringify({ rate, ts: Date.now() }));
-  } catch {
-    // ignore
-  }
-
-  return rate;
-}
-
-function toGBP(amount: number, currency?: string | null, rates?: FxRates): number | null {
-  const cur = normCur(currency);
-  const v = Number(amount) || 0;
-  if (cur === "GBP") return v;
-  const r = rates?.[cur];
-  if (!r) return null; // never fake-convert
-  return v * r;
-}
-
-// ---------- Dates ----------
-const pad2 = (n: number) => String(n).padStart(2, "0");
-const toDayKey = (d: Date) =>
-  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
 function makeLastNDaysKeys(n: number) {
   const keys: string[] = [];
@@ -106,7 +86,38 @@ function makeLastNDaysKeys(n: number) {
   return keys;
 }
 
-type DailyRow = { date: string } & Record<string, number | string>;
+function toMonthKey(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+function makeLastNMonthsKeys(n: number) {
+  const keys: string[] = [];
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  for (let i = n - 1; i >= 0; i--) {
+    const x = new Date(d);
+    x.setMonth(d.getMonth() - i);
+    keys.push(toMonthKey(x));
+  }
+  return keys;
+}
+
+function formatMonthLabel(monthKey: string) {
+  const [yy, mm] = monthKey.split("-").map((s) => Number(s));
+  const d = new Date(yy, (mm || 1) - 1, 1);
+  const m = d.toLocaleString(undefined, { month: "short" });
+  return `${m} ${yy}`;
+}
+
+function formatShortDate(iso: string) {
+  const d = new Date(iso + "T00:00:00");
+  const m = d.toLocaleString(undefined, { month: "short" });
+  const day = String(d.getDate());
+  return `${m} ${day}`;
+}
 
 const emptyDailyRow = (date: string, projectNames: string[]): DailyRow => {
   const row: DailyRow = { date };
@@ -128,25 +139,36 @@ const DEFAULT_COLORS = [
   "#22c55e", // green
   "#ec4899", // pink
   "#f59e0b", // amber
-  "#8b5cf6", // violet
-  "#14b8a6", // teal
+  "#a855f7", // purple
+  "#06b6d4", // cyan
   "#ef4444", // red
-  "#6366f1", // indigo
+  "#84cc16", // lime
+  "#f97316", // orange
+  "#14b8a6", // teal
 ];
 
 function colorForProject(name: string) {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return DEFAULT_COLORS[Math.abs(hash) % DEFAULT_COLORS.length];
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return DEFAULT_COLORS[hash % DEFAULT_COLORS.length];
 }
 
-function formatShortDate(iso: string) {
-  const d = new Date(iso + "T00:00:00");
-  const m = d.toLocaleString(undefined, { month: "short" });
-  const day = String(d.getDate());
-  return `${m} ${day}`;
+function FixedLegend({ projects }: { projects: Project[] }) {
+  if (!projects.length) return null;
+
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-4">
+      {projects.map((p) => (
+        <div key={p.id} className="flex items-center gap-1.5">
+          <span
+            className="inline-block h-3 w-3 rounded-[3px]"
+            style={{ background: colorForProject(p.name) }}
+          />
+          <span className="text-neutral-700 dark:text-neutral-300">{p.name}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 const GgTooltip = ({ active, payload, label }: any) => {
@@ -163,17 +185,12 @@ const GgTooltip = ({ active, payload, label }: any) => {
         border: `1px solid ${GG.tooltipBorder}`,
         borderRadius: 12,
         padding: "10px 12px",
-        fontSize: 12,
-        color: "#111827",
         boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-        minWidth: 180,
       }}
     >
-      <div style={{ fontWeight: 700, marginBottom: 6 }}>
-        {formatShortDate(label)}
-      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>{label}</div>
       {rows.length === 0 ? (
-        <div style={{ color: "#6b7280" }}>No data</div>
+        <div style={{ fontSize: 12, color: "#6b7280" }}>No data</div>
       ) : (
         rows.map((r: any) => (
           <div
@@ -182,9 +199,23 @@ const GgTooltip = ({ active, payload, label }: any) => {
               display: "flex",
               justifyContent: "space-between",
               gap: 12,
+              fontSize: 12,
+              lineHeight: "18px",
+              marginBottom: 2,
             }}
           >
-            <span style={{ color: "#374151" }}>{r.name}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 3,
+                  background: colorForProject(r.name),
+                  display: "inline-block",
+                }}
+              />
+              <span style={{ color: "#111827" }}>{r.name}</span>
+            </span>
             <span style={{ fontWeight: 700 }}>{r.value.toFixed(2)}</span>
           </div>
         ))
@@ -193,454 +224,54 @@ const GgTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-// Make the chart wider than the viewport so user can swipe left/right
-function chartInnerWidthPx(daysCount: number) {
-  const pxPerDay = 28; // increase for wider bars / easier reading
-  const minWidth = 520; // avoid tiny charts on desktop
-  return Math.max(minWidth, daysCount * pxPerDay);
-}
-
-// ---------- Manual time helpers ----------
-type ManualMode = "startEnd" | "duration";
-type ManualDraft = {
-  projectId: string;
-  date: string; // YYYY-MM-DD
-  mode: ManualMode;
-  startTime: string; // HH:MM
-  endTime: string; // HH:MM
-  durationMin: string; // numeric string
-  note: string;
-};
-
-function todayYMD() {
-  const now = new Date();
-  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
-}
-
-function toLocalISO(dateStr: string, hhmm: string) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const [hh, mm] = hhmm.split(":").map(Number);
-  const dt = new Date(y, m - 1, d, hh, mm, 0, 0); // local time
-  return dt.toISOString();
-}
-
-function addMinutesLocalISO(dateStr: string, hhmm: string, mins: number) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const [hh, mm] = hhmm.split(":").map(Number);
-  const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
-  dt.setMinutes(dt.getMinutes() + mins);
-  return dt.toISOString();
-}
-
-function ManualTimeModal(props: {
-  open: boolean;
-  onClose: () => void;
-  projects: Project[];
-  onCreated: () => void;
-}) {
-  const { open, onClose, projects, onCreated } = props;
-
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const defaultProjectId = useMemo(() => {
-    const first = projects?.[0]?.id;
-    return first != null ? String(first) : "";
-  }, [projects]);
-
-  const [draft, setDraft] = useState<ManualDraft>(() => ({
-    projectId: "",
-    date: todayYMD(),
-    mode: "startEnd",
-    startTime: "09:00",
-    endTime: "10:00",
-    durationMin: "60",
-    note: "",
-  }));
-
-  useEffect(() => {
-    if (!open) return;
-    setError(null);
-    setDraft((d) => ({
-      ...d,
-      projectId: d.projectId || defaultProjectId,
-    }));
-  }, [open, defaultProjectId]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  const parsedProjectId = Number(draft.projectId);
-  const projectOk = Number.isFinite(parsedProjectId) && parsedProjectId > 0;
-
-  function validate():
-    | { startISO: string; endISO: string; payload: any }
-    | null {
-    setError(null);
-
-    if (!projectOk) {
-      setError("Please choose a project.");
-      return null;
-    }
-    if (!draft.date) {
-      setError("Please choose a date.");
-      return null;
-    }
-    if (!draft.startTime) {
-      setError("Please enter a start time.");
-      return null;
-    }
-
-    const startISO = toLocalISO(draft.date, draft.startTime);
-    let endISO = "";
-
-    if (draft.mode === "startEnd") {
-      if (!draft.endTime) {
-        setError("Please enter an end time.");
-        return null;
-      }
-      endISO = toLocalISO(draft.date, draft.endTime);
-      if (new Date(endISO).getTime() <= new Date(startISO).getTime()) {
-        setError("End time must be after start time (same day).");
-        return null;
-      }
-    } else {
-      const mins = Number(draft.durationMin);
-      if (!Number.isFinite(mins) || mins <= 0) {
-        setError("Duration must be a positive number of minutes.");
-        return null;
-      }
-      endISO = addMinutesLocalISO(draft.date, draft.startTime, mins);
-    }
-
-    const payload = {
-      project_id: parsedProjectId,
-      start_time: startISO,
-      end_time: endISO,
-      note: draft.note?.trim() || null,
-    };
-
-    return { startISO, endISO, payload };
-  }
-
-  async function save() {
-    const v = validate();
-    if (!v) return;
-
-    setSaving(true);
-    setError(null);
-    try {
-      await api.post(endpoints.timeEntries, v.payload);
-      onCreated();
-      onClose();
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.detail ||
-        e?.response?.data?.message ||
-        e?.message ||
-        "Failed to save manual time entry.";
-      setError(String(msg));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 px-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div
-        className="w-full max-w-lg rounded-2xl border border-neutral-200 dark:border-neutral-700
-                   bg-white dark:bg-neutral-900 shadow-xl"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 flex items-start justify-between gap-3">
-          <div>
-            <div className="font-bold">Add manual time</div>
-            <div className="text-xs text-neutral-600 dark:text-neutral-400">
-              Create a completed entry without using the timer.
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700
-                       bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-            title="Close"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="px-4 py-4 space-y-4">
-          <div>
-            <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
-              Project
-            </div>
-            <select
-              value={draft.projectId}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, projectId: e.target.value }))
-              }
-              className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                         text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-            >
-              <option value="" disabled>
-                Select a project…
-              </option>
-              {projects.map((p) => (
-                <option key={p.id} value={String(p.id)}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
-                Date
-              </div>
-              <input
-                type="date"
-                value={draft.date}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, date: e.target.value }))
-                }
-                className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-              />
-            </div>
-
-            <div>
-              <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
-                Input type
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDraft((d) => ({ ...d, mode: "startEnd" }))}
-                  className={`flex-1 px-3 py-2 rounded-xl border ${
-                    draft.mode === "startEnd"
-                      ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-neutral-900 dark:border-white"
-                      : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  }`}
-                  title="Enter start and end time"
-                >
-                  Start/End
-                </button>
-                <button
-                  onClick={() => setDraft((d) => ({ ...d, mode: "duration" }))}
-                  className={`flex-1 px-3 py-2 rounded-xl border ${
-                    draft.mode === "duration"
-                      ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-neutral-900 dark:border-white"
-                      : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  }`}
-                  title="Enter start time and duration"
-                >
-                  Duration
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {draft.mode === "startEnd" ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
-                  Start time
-                </div>
-                <input
-                  type="time"
-                  value={draft.startTime}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, startTime: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-                />
-              </div>
-              <div>
-                <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
-                  End time
-                </div>
-                <input
-                  type="time"
-                  value={draft.endTime}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, endTime: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
-                  Start time
-                </div>
-                <input
-                  type="time"
-                  value={draft.startTime}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, startTime: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-                />
-              </div>
-              <div>
-                <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
-                  Duration (minutes)
-                </div>
-                <input
-                  inputMode="numeric"
-                  value={draft.durationMin}
-                  onChange={(e) =>
-                    setDraft((d) => ({
-                      ...d,
-                      durationMin: e.target.value.replace(/[^\d]/g, ""),
-                    }))
-                  }
-                  placeholder="e.g. 45"
-                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <div className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
-              Note (optional)
-            </div>
-            <textarea
-              rows={3}
-              value={draft.note}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, note: e.target.value }))
-              }
-              className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                         text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-            />
-          </div>
-
-          {error && (
-            <div className="text-sm text-red-600 dark:text-red-400">
-              {error}
-            </div>
-          )}
-        </div>
-
-        <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 flex gap-2">
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="flex-1 px-4 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700
-                       bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-70"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="flex-1 px-4 py-2 rounded-xl border border-neutral-900 dark:border-white
-                       bg-neutral-900 text-white dark:bg-white dark:text-neutral-900
-                       hover:opacity-95 disabled:opacity-70 font-semibold"
-          >
-            {saving ? "Saving…" : "Save entry"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+// Make the chart wide enough to encourage swipe; on mobile each day ~48px
+function chartInnerWidthPx(nKeys: number) {
+  return Math.max(320, nKeys * 48);
 }
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [filter, setFilter] = useState<string>("All");
+  const [rangeMode, setRangeMode] = useState<RangeMode>(RANGE_DEFAULT);
+
   const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
-  const [manualOpen, setManualOpen] = useState(false);
-
-  // ✅ chart scroll containers
   const timeScrollRef = useRef<HTMLDivElement | null>(null);
   const incomeScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ when this changes, we auto-scroll both charts to the far right
-  const [scrollToRightToken, setScrollToRightToken] = useState(0);
-
-  const scrollChartsToRight = () => {
-    requestAnimationFrame(() => {
-      const t = timeScrollRef.current;
-      const i = incomeScrollRef.current;
-      if (t) t.scrollLeft = t.scrollWidth;
-      if (i) i.scrollLeft = i.scrollWidth;
-    });
-  };
-
-  const loadAll = async (opts?: { scrollCharts?: boolean }) => {
+  async function loadAll({ scrollCharts }: { scrollCharts?: boolean } = {}) {
+    setLoading(true);
     try {
       const [pRes, tRes, iRes] = await Promise.all([
         api.get(endpoints.projects),
         api.get(endpoints.timeEntries),
         api.get(endpoints.incomes),
       ]);
-      setProjects(pRes.data as Project[]);
-      setTimeEntries(tRes.data as TimeEntry[]);
-      setIncomes(iRes.data as Income[]);
+      setProjects(pRes.data || []);
+      setTimeEntries(tRes.data || []);
+      setIncomes(iRes.data || []);
 
-      if (opts?.scrollCharts) {
-        setScrollToRightToken((n) => n + 1);
+      if (scrollCharts) {
+        setTimeout(() => {
+          const el1 = timeScrollRef.current;
+          const el2 = incomeScrollRef.current;
+          if (el1) el1.scrollLeft = el1.scrollWidth;
+          if (el2) el2.scrollLeft = el2.scrollWidth;
+        }, 0);
       }
-    } catch (err) {
-      console.error("Home loadAll failed:", err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
-  // ✅ initial load: scroll to most recent (right)
   useEffect(() => {
     loadAll({ scrollCharts: true });
-  }, []);
-
-  // background refreshes should NOT yank the user to the right
-  useEffect(() => {
-    const onFocus = () => loadAll({ scrollCharts: false });
-    const onVis = () => {
-      if (!document.hidden) loadAll({ scrollCharts: false });
-    };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, []);
-
-  // ✅ whenever token bumps (initial load, Refresh button, manual save), jump to right
-  useEffect(() => {
-    if (scrollToRightToken <= 0) return;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scrollChartsToRight();
-      });
-    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scrollToRightToken]);
+  }, []);
 
   const projectMap = useMemo(() => {
     const m: Record<number, string> = {};
@@ -655,23 +286,15 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
 
-    const currencies = Array.from(
-      new Set((incomes || []).map((i) => normCur(i.currency)))
-    );
+    const currencies = Array.from(new Set((incomes || []).map((i) => normCur(i.currency))));
     const missing = currencies.filter((c) => c !== "GBP" && !fxRates[c]);
     if (missing.length === 0) return;
 
     (async () => {
       try {
-        const pairs = await Promise.all(
-          missing.map(async (c) => [c, await fetchRateToGBP(c)] as const)
-        );
+        const rates = await fetchFxLatest("GBP");
         if (cancelled) return;
-        setFxRates((prev) => {
-          const next = { ...prev };
-          for (const [c, r] of pairs) next[c] = r;
-          return next;
-        });
+        setFxRates((prev) => ({ ...prev, ...rates }));
       } catch (e) {
         console.error("FX load failed:", e);
       }
@@ -683,13 +306,50 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomes]);
 
-  const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
+  const periodKeys = useMemo(() => {
+    if (rangeMode === "Week") return makeLastNDaysKeys(DAYS_WEEK);
+    if (rangeMode === "Month") return makeLastNDaysKeys(DAYS_MONTH);
+    return makeLastNMonthsKeys(MONTHS_YEAR);
+  }, [rangeMode]);
+
+  const rangeSubtitle = useMemo(() => {
+    if (rangeMode === "Week")
+      return `Stacked by date (last ${DAYS_WEEK} days) • Swipe left/right on charts`;
+    if (rangeMode === "Month")
+      return `Stacked by date (last ${DAYS_MONTH} days) • Swipe left/right on charts`;
+    return `Stacked by month (last ${MONTHS_YEAR} months) • Swipe left/right on charts`;
+  }, [rangeMode]);
 
   const projectNames = useMemo(() => projects.map((p) => p.name), [projects]);
 
   const dailyTimeData: DailyRow[] = useMemo(() => {
     const rows = new Map<string, DailyRow>();
-    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day, projectNames));
+
+    if (rangeMode === "Year") {
+      for (const mk of periodKeys)
+        rows.set(mk, emptyDailyRow(formatMonthLabel(mk), projectNames));
+
+      for (const e of timeEntries) {
+        if (!e.end_time) continue;
+
+        const pname = projectMap[e.project_id];
+        if (!pname) continue;
+
+        const start = new Date(e.start_time);
+        const end = new Date(e.end_time);
+        const mk = toMonthKey(start);
+        if (!rows.has(mk)) continue;
+
+        const durationHours = (end.getTime() - start.getTime()) / 1000 / 3600;
+        const row = rows.get(mk)!;
+        const prev = typeof row[pname] === "number" ? row[pname] : 0;
+        row[pname] = prev + Math.max(0, durationHours);
+      }
+
+      return Array.from(rows.values());
+    }
+
+    for (const day of periodKeys) rows.set(day, emptyDailyRow(day, projectNames));
 
     for (const e of timeEntries) {
       if (!e.end_time) continue;
@@ -706,40 +366,94 @@ export default function Home() {
       const row = rows.get(dayKey)!;
       const prev = typeof row[pname] === "number" ? row[pname] : 0;
       row[pname] = prev + Math.max(0, durationHours);
-
     }
 
     return Array.from(rows.values());
-  }, [timeEntries, projectMap, lastNDaysKeys, projectNames]);
+  }, [timeEntries, projectMap, periodKeys, projectNames, rangeMode]);
 
   const dailyIncomeData: DailyRow[] = useMemo(() => {
     const rows = new Map<string, DailyRow>();
-    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day, projectNames));
+
+    if (rangeMode === "Year") {
+      for (const mk of periodKeys)
+        rows.set(mk, emptyDailyRow(formatMonthLabel(mk), projectNames));
+
+      for (const inc of incomes) {
+        const pname = projectMap[inc.project_id];
+        if (!pname) continue;
+
+        const d = new Date(inc.date + "T00:00:00");
+        const mk = toMonthKey(d);
+        if (!rows.has(mk)) continue;
+
+        const gbp = toGBP(inc.amount, inc.currency, fxRates);
+        const row = rows.get(mk)!;
+        const prev = typeof row[pname] === "number" ? row[pname] : 0;
+        row[pname] = prev + Math.max(0, gbp ?? 0);
+      }
+
+      return Array.from(rows.values());
+    }
+
+    for (const day of periodKeys) rows.set(day, emptyDailyRow(day, projectNames));
 
     for (const inc of incomes) {
       const pname = projectMap[inc.project_id];
       if (!pname) continue;
 
-      const dayKey = toDayKey(new Date(inc.date));
+      const dayKey = inc.date;
       if (!rows.has(dayKey)) continue;
 
       const gbp = toGBP(inc.amount, inc.currency, fxRates);
       const row = rows.get(dayKey)!;
       const prev = typeof row[pname] === "number" ? row[pname] : 0;
-      row[pname] = prev + (gbp ?? 0);
-
+      row[pname] = prev + Math.max(0, gbp ?? 0);
     }
 
     return Array.from(rows.values());
-  }, [incomes, projectMap, lastNDaysKeys, fxRates, projectNames]);
+  }, [incomes, projectMap, periodKeys, projectNames, fxRates, rangeMode]);
 
-  function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
+  const visibleProjectsFor = (rows: DailyRow[]) => {
+    const sums: Record<string, number> = {};
+    for (const pn of projectNames) sums[pn] = 0;
+
+    for (const r of rows) {
+      for (const pn of projectNames) {
+        const v = Number((r as any)[pn] || 0);
+        sums[pn] += v;
+      }
+    }
+
+    const base = projects.filter((p) => sums[p.name] > 0);
+    if (filter !== "All") return base.filter((p) => p.name === filter);
+    return base;
+  };
+
+  const legendProjectsTime = useMemo(
+    () => visibleProjectsFor(dailyTimeData),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dailyTimeData, filter, projects, projectNames]
+  );
+
+  const legendProjectsIncome = useMemo(
+    () => visibleProjectsFor(dailyIncomeData),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dailyIncomeData, filter, projects, projectNames]
+  );
+
+  const xTickFormatter = useMemo(() => {
+    return rangeMode === "Year" ? (v: string) => v : (v: string) => formatShortDate(v);
+  }, [rangeMode]);
+
+  // Weekly totals cards (existing behaviour)
+  function calculateWeeklyTimeTotals(list: TimeEntry[]) {
     const totals: Record<string, number> = {};
     const now = Date.now();
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
 
-    for (const e of entries) {
+    for (const e of list) {
       if (!e.end_time) continue;
+
       const startMs = new Date(e.start_time).getTime();
       if (startMs < sevenDaysAgo) continue;
 
@@ -773,167 +487,146 @@ export default function Home() {
   const weeklyTimeTotals = calculateWeeklyTimeTotals(timeEntries);
   const weeklyIncomeTotals = calculateWeeklyIncomeTotals(incomes);
 
-  const fmtHours = (sec: number) => {
-    const h = Math.floor(sec / 3600);
-    const m = Math.floor((sec % 3600) / 60);
-    return `${h}h ${m}m`;
-  };
-
-  const recentIncomes = useMemo(() => {
-    return [...incomes]
-      .sort((a, b) => b.id - a.id)
-      .filter((i) => matchesFilter(projectMap[i.project_id]))
-      .slice(0, 10);
-  }, [incomes, filter, projectMap]);
-
-  const recentTimeEntries = useMemo(() => {
-    return [...timeEntries]
-      .sort((a, b) => b.id - a.id)
-      .filter((e) => matchesFilter(projectMap[e.project_id]))
-      .slice(0, 10);
-  }, [timeEntries, filter, projectMap]);
-
-  const deleteIncome = async (incomeId: number) => {
-    const yes = window.confirm(`Delete income #${incomeId}?`);
-    if (!yes) return;
-
-    try {
-      await api.delete(`${endpoints.incomes}${incomeId}/`);
-      setIncomes((prev) => prev.filter((i) => i.id !== incomeId));
-    } catch (err) {
-      alert("Failed to delete income.");
-      console.error(err);
-    }
-  };
-
-  const deleteTimeEntry = async (entryId: number) => {
-    const yes = window.confirm(`Delete time entry #${entryId}?`);
-    if (!yes) return;
-
-    try {
-      await api.delete(`${endpoints.timeEntries}${entryId}/`);
-      setTimeEntries((prev) => prev.filter((e) => e.id !== entryId));
-    } catch (err) {
-      alert("Failed to delete time entry.");
-      console.error(err);
-    }
-  };
+  const FIXED = useMemo(() => projects.map((p) => p.name), [projects]);
 
   return (
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
       <div className="flex gap-2 mb-4">
         <select
           value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value);
-            setScrollToRightToken((n) => n + 1);
-          }}
+          onChange={(e) => setFilter(e.target.value)}
           className="flex-1 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
         >
           <option value="All">All projects</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.name}>
-              {p.name}
+          {FIXED.map((p) => (
+            <option key={p} value={p}>
+              {p}
             </option>
           ))}
         </select>
 
         <button
-          onClick={() => setManualOpen(true)}
-          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                     bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-          title="Add manual time"
-        >
-          + Manual
-        </button>
-
-        <button
           onClick={() => loadAll({ scrollCharts: true })}
-          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                     bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          disabled={loading}
+          className="px-3 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
+                 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
           title="Refresh"
         >
           Refresh
         </button>
       </div>
 
-      <ManualTimeModal
-        open={manualOpen}
-        onClose={() => setManualOpen(false)}
-        projects={projects}
-        onCreated={() => loadAll({ scrollCharts: true })}
-      />
-
-      <FeedCard
-        title="Totals overview"
-        subtitle={`Stacked by date (last ${DAYS} days) • Swipe left/right on charts`}
-      >
+      <FeedCard title="Totals overview" subtitle={rangeSubtitle}>
         <div className="space-y-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-xs text-neutral-600 dark:text-neutral-400">View:</div>
+            <select
+              value={rangeMode}
+              onChange={(e) => setRangeMode(e.target.value as RangeMode)}
+              className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700 text-sm"
+              aria-label="Range filter"
+            >
+              <option value="Week">Week</option>
+              <option value="Month">Month</option>
+              <option value="Year">Year</option>
+            </select>
+          </div>
+
           <div>
             <p className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
               Daily time (hours) — stacked by project
             </p>
 
-            <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
-              <div className="overflow-x-auto" ref={timeScrollRef}>
-                <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
-                  <div className="h-56">
+            <div className="rounded-2xl bg-white dark:bg-neutral-900 p-2 shadow-sm border border-neutral-200 dark:border-neutral-800">
+              <div className="pb-2">
+                <FixedLegend projects={legendProjectsTime} />
+              </div>
+
+              <div className="flex items-stretch">
+                <div className="pr-2">
+                  <div className="h-56 w-[44px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={dailyTimeData}
-                        margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
+                        margin={{ top: 6, right: 0, bottom: 6, left: 0 }}
                         barCategoryGap={10}
                       >
-                        <CartesianGrid
-                          stroke={GG.grid}
-                          strokeDasharray="3 3"
-                          vertical={false}
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickFormatter={formatShortDate}
-                          tick={{ fontSize: 11, fill: GG.axis }}
-                          tickLine={false}
-                          axisLine={false}
-                          minTickGap={16}
-                        />
+                        {projects
+                          .filter((p) => (filter === "All" ? true : p.name === filter))
+                          .map((p) => (
+                            <Bar
+                              key={p.id}
+                              dataKey={p.name}
+                              stackId="time"
+                              fill="transparent"
+                              fillOpacity={0}
+                              isAnimationActive={false}
+                            />
+                          ))}
+
                         <YAxis
                           tick={{ fontSize: 11, fill: GG.axis }}
                           tickLine={false}
                           axisLine={false}
-                          width={30}
+                          width={44}
                         />
-                        <Tooltip content={<GgTooltip />} />
-                        <Legend
-                          verticalAlign="top"
-                          align="left"
-                          iconType="square"
-                          wrapperStyle={{
-                            fontSize: 12,
-                            color: GG.axis,
-                            paddingBottom: 8,
-                          }}
-                        />
-
-                        {projects.map((p) => (
-                          <Bar
-                            key={p.id}
-                            dataKey={p.name}
-                            stackId="time"
-                            fill={colorForProject(p.name)}
-                            radius={[6, 6, 0, 0]}
-                            fillOpacity={0.85}
-                          />
-                        ))}
+                        <XAxis dataKey="date" hide />
+                        <Tooltip content={<></>} />
                       </BarChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto" ref={timeScrollRef}>
+                  <div style={{ width: chartInnerWidthPx(periodKeys.length) }}>
+                    <div className="h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={dailyTimeData}
+                          margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
+                          barCategoryGap={10}
+                        >
+                          <CartesianGrid
+                            stroke={GG.grid}
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+
+                          <XAxis
+                            dataKey="date"
+                            tickFormatter={xTickFormatter}
+                            tick={{ fontSize: 11, fill: GG.axis }}
+                            tickLine={false}
+                            axisLine={false}
+                            minTickGap={16}
+                          />
+
+                          <YAxis hide />
+
+                          <Tooltip content={<GgTooltip />} />
+
+                          {projects
+                            .filter((p) => (filter === "All" ? true : p.name === filter))
+                            .map((p) => (
+                              <Bar
+                                key={p.id}
+                                dataKey={p.name}
+                                stackId="time"
+                                fill={colorForProject(p.name)}
+                                radius={[6, 6, 0, 0]}
+                                fillOpacity={0.85}
+                              />
+                            ))}
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-2 text-[11px] text-neutral-500">
-                Swipe left/right to view more days
+                Swipe left/right to view more {rangeMode === "Year" ? "months" : "days"}
               </div>
             </div>
           </div>
@@ -943,169 +636,140 @@ export default function Home() {
               Daily income (£) — stacked by project (auto FX)
             </p>
 
-            <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
-              <div className="overflow-x-auto" ref={incomeScrollRef}>
-                <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
-                  <div className="h-56">
+            <div className="rounded-2xl bg-white dark:bg-neutral-900 p-2 shadow-sm border border-neutral-200 dark:border-neutral-800">
+              <div className="pb-2">
+                <FixedLegend projects={legendProjectsIncome} />
+              </div>
+
+              <div className="flex items-stretch">
+                <div className="pr-2">
+                  <div className="h-56 w-[44px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={dailyIncomeData}
-                        margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
+                        margin={{ top: 6, right: 0, bottom: 6, left: 0 }}
                         barCategoryGap={10}
                       >
-                        <CartesianGrid
-                          stroke={GG.grid}
-                          strokeDasharray="3 3"
-                          vertical={false}
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickFormatter={formatShortDate}
-                          tick={{ fontSize: 11, fill: GG.axis }}
-                          tickLine={false}
-                          axisLine={false}
-                          minTickGap={16}
-                        />
+                        {projects
+                          .filter((p) => (filter === "All" ? true : p.name === filter))
+                          .map((p) => (
+                            <Bar
+                              key={p.id}
+                              dataKey={p.name}
+                              stackId="income"
+                              fill="transparent"
+                              fillOpacity={0}
+                              isAnimationActive={false}
+                            />
+                          ))}
+
                         <YAxis
                           tick={{ fontSize: 11, fill: GG.axis }}
                           tickLine={false}
                           axisLine={false}
-                          width={30}
+                          width={44}
                         />
-                        <Tooltip content={<GgTooltip />} />
-                        <Legend
-                          verticalAlign="top"
-                          align="left"
-                          iconType="square"
-                          wrapperStyle={{
-                            fontSize: 12,
-                            color: GG.axis,
-                            paddingBottom: 8,
-                          }}
-                        />
-
-                        {projects.map((p) => (
-                          <Bar
-                            key={p.id}
-                            dataKey={p.name}
-                            stackId="income"
-                            fill={colorForProject(p.name)}
-                            radius={[6, 6, 0, 0]}
-                            fillOpacity={0.85}
-                          />
-                        ))}
+                        <XAxis dataKey="date" hide />
+                        <Tooltip content={<></>} />
                       </BarChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto" ref={incomeScrollRef}>
+                  <div style={{ width: chartInnerWidthPx(periodKeys.length) }}>
+                    <div className="h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={dailyIncomeData}
+                          margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
+                          barCategoryGap={10}
+                        >
+                          <CartesianGrid
+                            stroke={GG.grid}
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+
+                          <XAxis
+                            dataKey="date"
+                            tickFormatter={xTickFormatter}
+                            tick={{ fontSize: 11, fill: GG.axis }}
+                            tickLine={false}
+                            axisLine={false}
+                            minTickGap={16}
+                          />
+
+                          <YAxis hide />
+
+                          <Tooltip content={<GgTooltip />} />
+
+                          {projects
+                            .filter((p) => (filter === "All" ? true : p.name === filter))
+                            .map((p) => (
+                              <Bar
+                                key={p.id}
+                                dataKey={p.name}
+                                stackId="income"
+                                fill={colorForProject(p.name)}
+                                radius={[6, 6, 0, 0]}
+                                fillOpacity={0.85}
+                              />
+                            ))}
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-2 text-[11px] text-neutral-500">
-                Swipe left/right to view more days
+                Swipe left/right to view more {rangeMode === "Year" ? "months" : "days"}
+              </div>
+            </div>
+          </div>
+
+          {/* Existing weekly totals sections (kept as-is) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-white dark:bg-neutral-900 p-3 shadow-sm border border-neutral-200 dark:border-neutral-800">
+              <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">
+                Last 7 days (time)
+              </div>
+              <div className="space-y-1">
+                {Object.entries(weeklyTimeTotals)
+                  .filter(([name]) => matchesFilter(name))
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 5)
+                  .map(([name, sec]) => (
+                    <div key={name} className="flex justify-between text-sm">
+                      <span className="truncate">{name}</span>
+                      <span className="tabular-nums">
+                        {(sec / 3600).toFixed(1)}h
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-white dark:bg-neutral-900 p-3 shadow-sm border border-neutral-200 dark:border-neutral-800">
+              <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">
+                Last 7 days (income)
+              </div>
+              <div className="space-y-1">
+                {Object.entries(weeklyIncomeTotals)
+                  .filter(([name]) => matchesFilter(name))
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 5)
+                  .map(([name, gbp]) => (
+                    <div key={name} className="flex justify-between text-sm">
+                      <span className="truncate">{name}</span>
+                      <span className="tabular-nums">£{gbp.toFixed(2)}</span>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
         </div>
-      </FeedCard>
-
-      <FeedCard title="This week (last 7 days)">
-        {projects.length === 0 ? (
-          <div className="text-sm text-neutral-500">No projects yet.</div>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {projects.map((p) => (
-              <li key={p.id} className="flex justify-between items-center">
-                <span
-                  className="font-medium"
-                  style={{ color: colorForProject(p.name) }}
-                >
-                  {p.name}
-                </span>
-                <span className="text-xs text-neutral-600 dark:text-neutral-400">
-                  ⏱ {fmtHours(weeklyTimeTotals[p.name] || 0)} · 💰 £
-                  {(weeklyIncomeTotals[p.name] || 0).toFixed(2)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </FeedCard>
-
-      <FeedCard title="Recent time entries" subtitle="Latest 10">
-        <ul className="space-y-2">
-          {recentTimeEntries.map((e) => {
-            const pname = projectMap[e.project_id] || `Project #${e.project_id}`;
-            const color = projectMap[e.project_id] ? colorForProject(pname) : undefined;
-
-            return (
-              <li
-                key={e.id}
-                className="flex items-center justify-between gap-3 border border-neutral-200 dark:border-neutral-700
-                           bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <div style={color ? { color } : undefined}>
-                    {pname} · #{e.id}
-                  </div>
-                  <div className="text-xs text-neutral-600 dark:text-neutral-400">
-                    {e.end_time ? "stopped" : "running"} ·{" "}
-                    {new Date(e.start_time).toLocaleString()}
-                  </div>
-                </div>
-                <button
-                  onClick={() => deleteTimeEntry(e.id)}
-                  className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
-                             bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  title="Delete time entry"
-                >
-                  🗑️
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </FeedCard>
-
-      <FeedCard title="Recent incomes" subtitle="Latest 10 (shows GBP)">
-        <ul className="space-y-2">
-          {recentIncomes.map((i) => {
-            const pname = projectMap[i.project_id] || `Project #${i.project_id}`;
-            const cur = normCur(i.currency);
-            const gbp = toGBP(i.amount, i.currency, fxRates);
-            const color = projectMap[i.project_id] ? colorForProject(pname) : undefined;
-
-            return (
-              <li
-                key={i.id}
-                className="flex items-center justify-between gap-3 border border-neutral-200 dark:border-neutral-700
-                           bg-white dark:bg-neutral-800 rounded-xl px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <div style={color ? { color } : undefined}>
-                    {pname} · #{i.id}
-                  </div>
-                  <div className="text-xs text-neutral-600 dark:text-neutral-400">
-                    {new Date(i.date).toLocaleDateString()} ·{" "}
-                    {cur === "GBP"
-                      ? `£${Number(i.amount).toFixed(2)}`
-                      : `${cur} ${Number(i.amount).toFixed(2)}  ≈  ${
-                          gbp == null ? "—" : `£${gbp.toFixed(2)}`
-                        }`}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => deleteIncome(i.id)}
-                  className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
-                             bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  title="Delete income"
-                >
-                  🗑️
-                </button>
-              </li>
-            );
-          })}
-        </ul>
       </FeedCard>
     </div>
   );
