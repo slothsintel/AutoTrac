@@ -1,8 +1,11 @@
 // frontend/src/pages/Auth.tsx
 import { useMemo, useState } from "react";
 import api, { endpoints, setToken } from "../api";
+import { useNavigate } from "react-router-dom";
 
 export default function Auth({ onAuthed }: { onAuthed: () => void }) {
+  const navigate = useNavigate();
+
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,9 +32,9 @@ export default function Auth({ onAuthed }: { onAuthed: () => void }) {
 
       if (mode === "register") {
         await api.post(endpoints.register, { email, password });
-
-        // ✅ Do NOT auto-login. User must verify first.
-        setErr("✅ Account created. Please check your inbox to verify your email, log in, and enjoy income tracking!");
+        setErr(
+          "✅ Account created. Please check your inbox to verify your email, then log in."
+        );
         setMode("login");
         setBusy(false);
         return;
@@ -74,7 +77,8 @@ export default function Auth({ onAuthed }: { onAuthed: () => void }) {
           Email
         </label>
         <input
-          className="w-full mt-1 mb-3 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700"
+          className="w-full mt-1 mb-3 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-900
+                     border-neutral-300 dark:border-neutral-700"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoCapitalize="none"
@@ -86,11 +90,22 @@ export default function Auth({ onAuthed }: { onAuthed: () => void }) {
           Password
         </label>
         <input
-          className="w-full mt-1 mb-2 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700"
+          className="w-full mt-1 mb-2 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-900
+                     border-neutral-300 dark:border-neutral-700"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           type="password"
         />
+
+        {mode === "login" && (
+          <button
+            type="button"
+            onClick={() => navigate("/forgot-password")}
+            className="mb-2 text-sm underline text-neutral-600 dark:text-neutral-300"
+          >
+            Forgot password?
+          </button>
+        )}
 
         <div className="text-[11px] text-neutral-500 mb-3">
           {pwTooLong ? (
