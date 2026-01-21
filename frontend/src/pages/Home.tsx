@@ -129,6 +129,26 @@ function formatMonthLabel(ym: string) {
   return `${mon} ${y}`;
 }
 
+function daysInMonth(year: number, month1to12: number) {
+  return new Date(year, month1to12, 0).getDate();
+}
+
+function makeMonthDaysKeys(year: number, month1to12: number) {
+  const n = daysInMonth(year, month1to12);
+  const keys: string[] = [];
+  for (let d = 1; d <= n; d++) {
+    keys.push(`${year}-${pad2(month1to12)}-${pad2(d)}`);
+  }
+  return keys;
+}
+
+function makeYearMonthsKeys(year: number) {
+  const keys: string[] = [];
+  for (let m = 1; m <= 12; m++) keys.push(`${year}-${pad2(m)}`);
+  return keys;
+}
+
+
 
 type DailyRow = { date: string } & Record<string, number | string>;
 
@@ -150,12 +170,12 @@ const GG = {
 const DEFAULT_COLORS = [
   "#3b82f6",
   "#22c55e",
-  "#ee6fae",
+  "#ee9ef8",
   "#f59e0b",
-  "#370b9e",
+  "#6851a0",
   "#71ccc1",
-  "#f11b1b",
-  "#093a03",
+  "#f36060",
+  "#698366",
 ];
 
 function colorForProject(name: string) {
@@ -615,6 +635,9 @@ export default function Home() {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [filter, setFilter] = useState<string>("All");
   const [period, setPeriod] = useState<"Month" | "Year">("Month");
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1); 
   const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
   const [manualOpen, setManualOpen] = useState(false);
@@ -728,11 +751,17 @@ export default function Home() {
   const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
   const lastNMonthsKeys = useMemo(() => makeLastNMonthsKeys(12), []);
 
-  const xKeys = period === "Year" ? lastNMonthsKeys : lastNDaysKeys;
+  const xKeys = useMemo(() => {
+    return period === "Year"
+      ? makeYearMonthsKeys(selectedYear)
+      : makeMonthDaysKeys(selectedYear, selectedMonth);
+  }, [period, selectedYear, selectedMonth]);
+
   const xKeyCount = xKeys.length;
 
   const xTickFormatter = (label: string) =>
     period === "Year" ? formatMonthLabel(label) : formatShortDate(label);
+
 
 
   const projectNames = useMemo(() => projects.map((p) => p.name), [projects]);
@@ -783,6 +812,22 @@ export default function Home() {
 
       return Array.from(rows.values());
     }, [incomes, projectMap, xKeys, fxRates, projectNames, period]);
+
+    const yearOptions = useMemo(() => {
+    const y = now.getFullYear();
+    return [y - 2, y - 1, y, y + 1]; // adjust if you want more history
+  }, []);
+
+    const monthOptions = useMemo(
+      () => [
+        { v: 1, label: "Jan" }, { v: 2, label: "Feb" }, { v: 3, label: "Mar" },
+        { v: 4, label: "Apr" }, { v: 5, label: "May" }, { v: 6, label: "Jun" },
+        { v: 7, label: "Jul" }, { v: 8, label: "Aug" }, { v: 9, label: "Sep" },
+        { v: 10, label: "Oct" }, { v: 11, label: "Nov" }, { v: 12, label: "Dec" },
+      ],
+      []
+    );
+
 
 
   function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
@@ -904,6 +949,33 @@ export default function Home() {
         <option value="Month">Month (last 30 days)</option>
         <option value="Year">Year (last 12 months)</option>
         </select>
+
+        <select
+        value={selectedYear}
+        onChange={(e) => setSelectedYear(Number(e.target.value))}
+        className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                  text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+        title="Year"
+      >
+        {yearOptions.map((y) => (
+          <option key={y} value={y}>{y}</option>
+        ))}
+      </select>
+
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(Number(e.target.value))}
+          disabled={period === "Year"}
+          className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                    text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+                    disabled:opacity-50"
+          title="Month"
+        >
+          {monthOptions.map((m) => (
+            <option key={m.v} value={m.v}>{m.label}</option>
+          ))}
+        </select>
+
 
         <button
           onClick={() => setManualOpen(true)}
