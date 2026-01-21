@@ -889,83 +889,91 @@ export default function Home() {
 
   return (
     <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
-      <div className="flex gap-2 mb-4">
-        <select
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value);
-            setScrollToRightToken((n) => n + 1);
-          }}
-          className="flex-1 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                     text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-        >
-          <option value="All">All projects</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.name}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+      <div className="mb-4 space-y-2">
+        {/* Row 1: filters */}
+        <div className="flex gap-2 flex-wrap">
+          <select
+            value={filter}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setScrollToRightToken((n) => n + 1);
+            }}
+            className="flex-1 min-w-[140px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+          >
+            <option value="All">All projects</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+          </select>
 
-        <select
-        value={period}
-        onChange={(e) => {
-          setPeriod(e.target.value as "Month" | "Year");
-          setScrollToRightToken((n) => n + 1);
-        }}
-        className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                  text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-        title="Period"
-      >
-        <option value="Month">Month</option>
-        <option value="Year">Year</option>
+          <select
+            value={period}
+            onChange={(e) => {
+              setPeriod(e.target.value as "Month" | "Year");
+              setScrollToRightToken((n) => n + 1);
+            }}
+            className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+            title="Period"
+          >
+            <option value="Month">By month</option>
+            <option value="Year">By year</option>
+          </select>
 
-        </select>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+            title="Year"
+          >
+            {yearOptions.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
 
-        <select
-        value={selectedYear}
-        onChange={(e) => setSelectedYear(Number(e.target.value))}
-        className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                  text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
-        title="Year"
-      >
-        {yearOptions.map((y) => (
-          <option key={y} value={y}>{y}</option>
-        ))}
-      </select>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            disabled={period === "Year"}
+            className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                      text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+                      disabled:opacity-50"
+            title="Month"
+          >
+            {monthOptions.map((m) => (
+              <option key={m.v} value={m.v}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(Number(e.target.value))}
-          disabled={period === "Year"}
-          className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                    text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
-                    disabled:opacity-50"
-          title="Month"
-        >
-          {monthOptions.map((m) => (
-            <option key={m.v} value={m.v}>{m.label}</option>
-          ))}
-        </select>
+        {/* Row 2: actions */}
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => setManualOpen(true)}
+            className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
+                      bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            title="Add manual time"
+          >
+            Manual
+          </button>
 
-
-        <button
-          onClick={() => setManualOpen(true)}
-          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                     bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-          title="Add manual time"
-        >
-          + Manual
-        </button>
-
-        <button
-          onClick={() => loadAll({ scrollCharts: true })}
-          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                     bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-          title="Refresh"
-        >
-          Refresh
-        </button>
+          <button
+            onClick={() => loadAll({ scrollCharts: true })}
+            className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
+                      bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            title="Refresh"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <ManualTimeModal
