@@ -36,7 +36,11 @@ async function fetchFxLatest(base = FX_BASE): Promise<FxRates> {
   return { ...rates, [base]: 1 };
 }
 
-function toGBP(amount: number, currency: string | null, rates?: FxRates): number | null {
+function toGBP(
+  amount: number,
+  currency: string | null | undefined,
+  rates?: FxRates
+): number | null {
   const cur = normCur(currency || "GBP");
   if (cur === "GBP") return amount;
   if (!rates || !rates[cur]) return null;
