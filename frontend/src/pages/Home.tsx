@@ -994,58 +994,91 @@ export default function Home() {
             </p>
 
             <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
-              <div className="overflow-x-auto" ref={incomeScrollRef}>
-                <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
-                  <div className="h-56">
+              {/* ✅ Fixed legend */}
+              <div className="sticky top-0 z-10 bg-white pb-2">
+                <FixedLegend projects={projects} />
+              </div>
+
+              <div className="flex items-stretch">
+                {/* ✅ Fixed Y-axis */}
+                <div className="sticky left-0 z-10 bg-white pr-2">
+                  <div className="h-56 w-[40px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={dailyIncomeData}
-                        margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
+                        margin={{ top: 6, right: 0, bottom: 6, left: 0 }}
                         barCategoryGap={10}
                       >
-                        <CartesianGrid
-                          stroke={GG.grid}
-                          strokeDasharray="3 3"
-                          vertical={false}
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickFormatter={formatShortDate}
-                          tick={{ fontSize: 11, fill: GG.axis }}
-                          tickLine={false}
-                          axisLine={false}
-                          minTickGap={16}
-                        />
-                        <YAxis
-                          tick={{ fontSize: 11, fill: GG.axis }}
-                          tickLine={false}
-                          axisLine={false}
-                          width={30}
-                        />
-                        <Tooltip content={<GgTooltip />} />
-                        <Legend
-                          verticalAlign="top"
-                          align="left"
-                          iconType="square"
-                          wrapperStyle={{
-                            fontSize: 12,
-                            color: GG.axis,
-                            paddingBottom: 8,
-                          }}
-                        />
-
+                        {/* Keep scale identical by including the same stacked bars, but invisible */}
                         {projects.map((p) => (
                           <Bar
                             key={p.id}
                             dataKey={p.name}
                             stackId="income"
-                            fill={colorForProject(p.name)}
-                            radius={[6, 6, 0, 0]}
-                            fillOpacity={0.85}
+                            fill="transparent"
+                            fillOpacity={0}
+                            isAnimationActive={false}
                           />
                         ))}
+
+                        <YAxis
+                          tick={{ fontSize: 11, fill: GG.axis }}
+                          tickLine={false}
+                          axisLine={false}
+                          width={40}
+                        />
+
+                        {/* Hide everything else in this axis-only chart */}
+                        <XAxis dataKey="date" hide />
+                        <Tooltip content={<></>} />
                       </BarChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* ✅ Scrollable plot area */}
+                <div className="overflow-x-auto" ref={incomeScrollRef}>
+                  <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
+                    <div className="h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={dailyIncomeData}
+                          margin={{ top: 6, right: 12, bottom: 6, left: 0 }}
+                          barCategoryGap={10}
+                        >
+                          <CartesianGrid
+                            stroke={GG.grid}
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+
+                          <XAxis
+                            dataKey="date"
+                            tickFormatter={formatShortDate}
+                            tick={{ fontSize: 11, fill: GG.axis }}
+                            tickLine={false}
+                            axisLine={false}
+                            minTickGap={16}
+                          />
+
+                          {/* Hide YAxis here (it’s fixed on the left) */}
+                          <YAxis hide />
+
+                          <Tooltip content={<GgTooltip />} />
+
+                          {projects.map((p) => (
+                            <Bar
+                              key={p.id}
+                              dataKey={p.name}
+                              stackId="income"
+                              fill={colorForProject(p.name)}
+                              radius={[6, 6, 0, 0]}
+                              fillOpacity={0.85}
+                            />
+                          ))}
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
               </div>
