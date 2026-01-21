@@ -748,9 +748,6 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomes]);
 
-  const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
-  const lastNMonthsKeys = useMemo(() => makeLastNMonthsKeys(12), []);
-
   const xKeys = useMemo(() => {
     return period === "Year"
       ? makeYearMonthsKeys(selectedYear)
