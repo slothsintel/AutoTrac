@@ -1116,8 +1116,9 @@ export default function Home() {
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => setManualOpen(true)}
-            className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                      bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className="min-w-0 w-[90px] max-w-[90px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+           disabled:opacity-50 truncate"
             title="Add manual time"
           >
             Manual
@@ -1143,8 +1144,9 @@ export default function Home() {
 
           <button
             onClick={() => loadAll({ scrollCharts: true })}
-            className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                      bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className="min-w-0 w-[90px] max-w-[90px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+           disabled:opacity-50 truncate"
             title="Refresh"
           >
             Refresh
