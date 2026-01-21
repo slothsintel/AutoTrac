@@ -106,6 +106,30 @@ function makeLastNDaysKeys(n: number) {
   return keys;
 }
 
+const toMonthKey = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+
+function makeLastNMonthsKeys(n: number) {
+  const keys: string[] = [];
+  const today = new Date();
+  today.setDate(1);
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setMonth(today.getMonth() - i);
+    keys.push(toMonthKey(d));
+  }
+  return keys;
+}
+
+function formatMonthLabel(ym: string) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, (m || 1) - 1, 1);
+  const mon = d.toLocaleString(undefined, { month: "short" });
+  return `${mon} ${y}`;
+}
+
+
 type DailyRow = { date: string } & Record<string, number | string>;
 
 const emptyDailyRow = (date: string, projectNames: string[]): DailyRow => {
@@ -590,6 +614,7 @@ export default function Home() {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [filter, setFilter] = useState<string>("All");
+  const [period, setPeriod] = useState<"Month" | "Year">("Month");
   const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
   const [manualOpen, setManualOpen] = useState(false);
@@ -701,12 +726,20 @@ export default function Home() {
   }, [incomes]);
 
   const lastNDaysKeys = useMemo(() => makeLastNDaysKeys(DAYS), []);
+  const lastNMonthsKeys = useMemo(() => makeLastNMonthsKeys(12), []);
+
+  const xKeys = period === "Year" ? lastNMonthsKeys : lastNDaysKeys;
+  const xKeyCount = xKeys.length;
+
+  const xTickFormatter = (label: string) =>
+    period === "Year" ? formatMonthLabel(label) : formatShortDate(label);
+
 
   const projectNames = useMemo(() => projects.map((p) => p.name), [projects]);
 
   const dailyTimeData: DailyRow[] = useMemo(() => {
     const rows = new Map<string, DailyRow>();
-    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day, projectNames));
+    for (const k of xKeys) rows.set(k, emptyDailyRow(k, projectNames));
 
     for (const e of timeEntries) {
       if (!e.end_time) continue;
@@ -716,39 +749,41 @@ export default function Home() {
 
       const start = new Date(e.start_time);
       const end = new Date(e.end_time);
-      const dayKey = toDayKey(start);
-      if (!rows.has(dayKey)) continue;
+
+      const key = period === "Year" ? toMonthKey(start) : toDayKey(start);
+      if (!rows.has(key)) continue;
 
       const durationHours = (end.getTime() - start.getTime()) / 1000 / 3600;
-      const row = rows.get(dayKey)!;
+      const row = rows.get(key)!;
       const prev = typeof row[pname] === "number" ? row[pname] : 0;
       row[pname] = prev + Math.max(0, durationHours);
-
     }
 
     return Array.from(rows.values());
-  }, [timeEntries, projectMap, lastNDaysKeys, projectNames]);
+  }, [timeEntries, projectMap, xKeys, projectNames, period]);
 
-  const dailyIncomeData: DailyRow[] = useMemo(() => {
-    const rows = new Map<string, DailyRow>();
-    for (const day of lastNDaysKeys) rows.set(day, emptyDailyRow(day, projectNames));
 
-    for (const inc of incomes) {
-      const pname = projectMap[inc.project_id];
-      if (!pname) continue;
+    const dailyIncomeData: DailyRow[] = useMemo(() => {
+      const rows = new Map<string, DailyRow>();
+      for (const k of xKeys) rows.set(k, emptyDailyRow(k, projectNames));
 
-      const dayKey = toDayKey(new Date(inc.date));
-      if (!rows.has(dayKey)) continue;
+      for (const inc of incomes) {
+        const pname = projectMap[inc.project_id];
+        if (!pname) continue;
 
-      const gbp = toGBP(inc.amount, inc.currency, fxRates);
-      const row = rows.get(dayKey)!;
-      const prev = typeof row[pname] === "number" ? row[pname] : 0;
-      row[pname] = prev + (gbp ?? 0);
+        const d = new Date(inc.date);
+        const key = period === "Year" ? toMonthKey(d) : toDayKey(d);
+        if (!rows.has(key)) continue;
 
-    }
+        const gbp = toGBP(inc.amount, inc.currency, fxRates);
+        const row = rows.get(key)!;
+        const prev = typeof row[pname] === "number" ? row[pname] : 0;
+        row[pname] = prev + (gbp ?? 0);
+      }
 
-    return Array.from(rows.values());
-  }, [incomes, projectMap, lastNDaysKeys, fxRates, projectNames]);
+      return Array.from(rows.values());
+    }, [incomes, projectMap, xKeys, fxRates, projectNames, period]);
+
 
   function calculateWeeklyTimeTotals(entries: TimeEntry[]) {
     const totals: Record<string, number> = {};
@@ -856,6 +891,20 @@ export default function Home() {
           ))}
         </select>
 
+        <select
+        value={period}
+        onChange={(e) => {
+          setPeriod(e.target.value as "Month" | "Year");
+          setScrollToRightToken((n) => n + 1);
+        }}
+        className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
+                  text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+        title="Period"
+      >
+        <option value="Month">Month (last 30 days)</option>
+        <option value="Year">Year (last 12 months)</option>
+        </select>
+
         <button
           onClick={() => setManualOpen(true)}
           className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
@@ -937,7 +986,7 @@ export default function Home() {
 
                 {/* ✅ Scrollable plot area */}
                 <div className="overflow-x-auto" ref={timeScrollRef}>
-                  <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
+                  <div style={{ width: chartInnerWidthPx(xKeyCount) }}>
                     <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
@@ -953,7 +1002,7 @@ export default function Home() {
 
                           <XAxis
                             dataKey="date"
-                            tickFormatter={formatShortDate}
+                            tickFormatter={xTickFormatter}
                             tick={{ fontSize: 11, fill: GG.axis }}
                             tickLine={false}
                             axisLine={false}
@@ -1038,7 +1087,7 @@ export default function Home() {
 
                 {/* ✅ Scrollable plot area */}
                 <div className="overflow-x-auto" ref={incomeScrollRef}>
-                  <div style={{ width: chartInnerWidthPx(lastNDaysKeys.length) }}>
+                  <div style={{ width: chartInnerWidthPx(xKeyCount) }}>
                     <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
@@ -1054,7 +1103,7 @@ export default function Home() {
 
                           <XAxis
                             dataKey="date"
-                            tickFormatter={formatShortDate}
+                            tickFormatter={xTickFormatter}
                             tick={{ fontSize: 11, fill: GG.axis }}
                             tickLine={false}
                             axisLine={false}
