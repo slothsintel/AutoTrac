@@ -94,33 +94,7 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 const toDayKey = (d: Date) =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
-function makeLastNDaysKeys(n: number) {
-  const keys: string[] = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    keys.push(toDayKey(d));
-  }
-  return keys;
-}
-
 const toMonthKey = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
-
-function makeLastNMonthsKeys(n: number) {
-  const keys: string[] = [];
-  const today = new Date();
-  today.setDate(1);
-  today.setHours(0, 0, 0, 0);
-
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setMonth(today.getMonth() - i);
-    keys.push(toMonthKey(d));
-  }
-  return keys;
-}
 
 function formatMonthLabel(ym: string) {
   const [y, m] = ym.split("-").map(Number);
