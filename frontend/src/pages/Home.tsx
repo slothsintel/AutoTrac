@@ -917,8 +917,9 @@ export default function Home() {
                   text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
         title="Period"
       >
-        <option value="Month">Month (last 30 days)</option>
-        <option value="Year">Year (last 12 months)</option>
+        <option value="Month">Month</option>
+        <option value="Year">Year</option>
+
         </select>
 
         <select
