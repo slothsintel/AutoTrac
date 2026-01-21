@@ -8,9 +8,9 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   CartesianGrid,
 } from "recharts";
+
 
 type Project = { id: number; name: string };
 type TimeEntry = {
