@@ -124,14 +124,14 @@ const GG = {
 
 // Stable palette + deterministic mapping by project name
 const DEFAULT_COLORS = [
-  "#3b82f6", // blue
-  "#22c55e", // green
-  "#ec4899", // pink
-  "#f59e0b", // amber
-  "#8b5cf6", // violet
-  "#14b8a6", // teal
-  "#ef4444", // red
-  "#6366f1", // indigo
+  "#3b82f6",
+  "#22c55e",
+  "#ee6fae",
+  "#f59e0b",
+  "#370b9e",
+  "#71ccc1",
+  "#f11b1b",
+  "#093a03",
 ];
 
 function colorForProject(name: string) {
