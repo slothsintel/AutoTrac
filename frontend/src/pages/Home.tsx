@@ -1200,9 +1200,9 @@ export default function Home() {
                         ))}
 
                         <YAxis
-                          tick={{ fontSize: 11, fill: GG.axis }}
+                          tick={{ fontSize: 11, fill: "#111827" }}
                           tickLine={false}
-                          axisLine={false}
+                          axisLine={{ stroke: "#111827" }}
                           width={40}
                         />
 
@@ -1280,7 +1280,7 @@ export default function Home() {
 
               <div className="flex items-stretch">
                 {/* ✅ Fixed Y-axis */}
-                <div className="sticky left-0 z-10 bg-white pr-2">
+                <div className="sticky left-0 z-10 bg-white pr-2 border-r border-neutral-200">
                   <div className="h-56 w-[40px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -1301,9 +1301,9 @@ export default function Home() {
                         ))}
 
                         <YAxis
-                          tick={{ fontSize: 11, fill: GG.axis }}
+                          tick={{ fontSize: 11, fill: "#111827" }}
                           tickLine={false}
-                          axisLine={false}
+                          axisLine={{ stroke: "#111827" }}
                           width={40}
                         />
 
