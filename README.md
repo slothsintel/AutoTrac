@@ -258,8 +258,6 @@ Render automatically redeploys the backend service.
 
 # Roadmap
 
-- CSV export (time & income)
-- Monthly summaries
 - biometric login
 - iOS / Android store packaging
 - Team / shared projects

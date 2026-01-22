@@ -1179,7 +1179,7 @@ export default function Home() {
 
               <div className="flex items-stretch">
                 {/* ✅ Fixed Y-axis */}
-                <div className="sticky left-0 z-10 bg-white pr-2">
+                <div className="sticky left-0 z-10 bg-white dark:bg-neutral-900 pr-2">
                   <div className="h-56 w-[40px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart

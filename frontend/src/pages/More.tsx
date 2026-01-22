@@ -148,7 +148,7 @@ export default function More() {
       {/* Footer — ONLY on More page */}
       <footer className="mt-10 pt-6 border-t border-neutral-300 dark:border-neutral-700 text-xs text-neutral-600 dark:text-neutral-400 space-y-2">
         <p className="font-medium text-neutral-700 dark:text-neutral-300">
-          <a href="https://github.com/slothsintel/autotrac" target="_blank" rel="noreferrer">AutoTrac 0.1.2</a> is powered by <a href="https://github.com/slothsintel/autotrac" target="_blank" rel="noreferrer">Sloth Intel</a>
+          <a href="https://github.com/slothsintel/autotrac" target="_blank" rel="noreferrer">AutoTrac 0.2.0</a> is powered by <a href="https://github.com/slothsintel/autotrac" target="_blank" rel="noreferrer">Sloth Intel</a>
         </p>
 
         <p>© 2026 Sloths Intel.</p>
