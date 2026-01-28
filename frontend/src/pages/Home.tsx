@@ -1196,6 +1196,7 @@ export default function Home() {
                             fill="transparent"
                             fillOpacity={0}
                             isAnimationActive={false}
+                            activeBar={false}
                           />
                         ))}
 
@@ -1252,6 +1253,7 @@ export default function Home() {
                               fill={colorForProject(p.name)}
                               radius={[6, 6, 0, 0]}
                               fillOpacity={0.85}
+                              activeBar={false}
                             />
                           ))}
                         </BarChart>
@@ -1297,6 +1299,7 @@ export default function Home() {
                             fill="transparent"
                             fillOpacity={0}
                             isAnimationActive={false}
+                            activeBar={false}
                           />
                         ))}
 
@@ -1353,6 +1356,7 @@ export default function Home() {
                               fill={colorForProject(p.name)}
                               radius={[6, 6, 0, 0]}
                               fillOpacity={0.85}
+                              activeBar={false}
                             />
                           ))}
                         </BarChart>
