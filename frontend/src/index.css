@@ -78,3 +78,16 @@ svg foreignObject * {
 }
 
 body { outline: 4px solid red !important; }
+
+select.pill-btn {
+  appearance: none;
+  padding-right: 28px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.7) 50%),
+    linear-gradient(135deg, rgba(255,255,255,0.7) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 50%,
+    calc(100% - 12px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}

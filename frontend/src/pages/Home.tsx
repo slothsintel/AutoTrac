@@ -1128,8 +1128,9 @@ export default function Home() {
 
           <button
           onClick={exportJson}
-          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                    bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className="px-4 py-2 rounded-xl border bg-white dark:bg-neutral-800
+           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+           disabled:opacity-50 truncate"
           title="Export filtered data as JSON"
         >
           Export JSON
@@ -1137,8 +1138,9 @@ export default function Home() {
 
         <button
           onClick={exportCsv}
-          className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                    bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className="px-4 py-2 rounded-xl border bg-white dark:bg-neutral-800
+           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+           disabled:opacity-50 truncate"
           title="Export filtered data as CSV"
         >
           Export CSV
