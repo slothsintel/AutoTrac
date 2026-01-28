@@ -5,3 +5,25 @@
 /* Safe areas so bottom bar doesn’t overlap on iOS/Android */
 :root { --safe-bottom: env(safe-area-inset-bottom); }
 main { padding-bottom: calc(4rem + var(--safe-bottom)); }
+
+/* Kill Recharts mobile focus / outline artifacts */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+.recharts-tooltip-wrapper:focus,
+.recharts-tooltip-wrapper:focus-visible {
+  outline: none !important;
+}
+
+/* Android Chrome sometimes applies it to children */
+.recharts-tooltip-wrapper * {
+  outline: none !important;
+}
+
+@media (hover: none) {
+  .recharts-tooltip-wrapper,
+  .recharts-tooltip-wrapper * {
+    outline: none !important;
+  }
+}
