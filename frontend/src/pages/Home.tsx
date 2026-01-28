@@ -1209,7 +1209,7 @@ export default function Home() {
 
                         {/* Hide everything else in this axis-only chart */}
                         <XAxis dataKey="date" hide />
-                        <Tooltip content={<></>} cursor={false} />
+                        <Tooltip content={<></>} cursor={false} wrapperStyle={{ outline: "none" }} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1243,7 +1243,7 @@ export default function Home() {
                           {/* Hide YAxis here (it’s fixed on the left) */}
                           <YAxis hide />
 
-                          <Tooltip content={<GgTooltip />} cursor={false} />
+                          <Tooltip content={<GgTooltip />} cursor={false} wrapperStyle={{ outline: "none" }} />
 
                           {projects.map((p) => (
                             <Bar
@@ -1312,7 +1312,7 @@ export default function Home() {
 
                         {/* Hide everything else in this axis-only chart */}
                         <XAxis dataKey="date" hide />
-                        <Tooltip content={<></>} cursor={false} />
+                        <Tooltip content={<></>} cursor={false} wrapperStyle={{ outline: "none" }} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1346,7 +1346,7 @@ export default function Home() {
                           {/* Hide YAxis here (it’s fixed on the left) */}
                           <YAxis hide />
 
-                          <Tooltip content={<GgTooltip />} cursor={false} />
+                          <Tooltip content={<GgTooltip />} cursor={false} wrapperStyle={{ outline: "none" }} />
 
                           {projects.map((p) => (
                             <Bar
