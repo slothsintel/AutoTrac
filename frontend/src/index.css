@@ -39,3 +39,42 @@ main { padding-bottom: calc(4rem + var(--safe-bottom)); }
 .recharts-tooltip-wrapper:focus-visible {
   outline: none !important;
 }
+
+/* =========================================================
+   Recharts v3 (touch): remove tap cursor + active overlays
+   ========================================================= */
+
+/* Tooltip cursor layer (can be rect/line/path depending on chart) */
+.recharts-tooltip-cursor,
+.recharts-tooltip-cursor * {
+  display: none !important;
+  stroke: transparent !important;
+  fill: transparent !important;
+}
+
+/* Some v3 builds attach cursor under a "recharts-cursor" class */
+.recharts-cursor,
+.recharts-cursor * {
+  display: none !important;
+  stroke: transparent !important;
+  fill: transparent !important;
+}
+
+/* Active shape/outline on tap (sometimes drawn separately) */
+.recharts-active-bar,
+.recharts-active-bar * {
+  stroke: transparent !important;
+  outline: none !important;
+}
+
+/* If the browser is drawing focus outlines around SVG/foreignObject */
+.recharts-tooltip-wrapper,
+.recharts-tooltip-wrapper * ,
+svg:focus,
+svg *:focus,
+svg foreignObject,
+svg foreignObject * {
+  outline: none !important;
+}
+
+body { outline: 4px solid red !important; }
