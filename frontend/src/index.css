@@ -27,3 +27,15 @@ main { padding-bottom: calc(4rem + var(--safe-bottom)); }
     outline: none !important;
   }
 }
+
+/* --- Recharts: kill tap/hover cursor crosshair + any active outline --- */
+.recharts-tooltip-cursor {
+  display: none !important;
+}
+
+.recharts-active-bar,
+.recharts-bar-rectangle.is-active,
+.recharts-tooltip-wrapper:focus,
+.recharts-tooltip-wrapper:focus-visible {
+  outline: none !important;
+}
