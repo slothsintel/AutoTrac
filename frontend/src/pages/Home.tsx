@@ -1242,7 +1242,10 @@ export default function Home() {
                           {/* Hide YAxis here (it’s fixed on the left) */}
                           <YAxis hide />
 
-                          <Tooltip content={<GgTooltip />} cursor={false} />
+                          <Tooltip
+                            content={<GgTooltip />}
+                            cursor={{ stroke: 'rgba(0,0,0,0.08)', strokeWidth: 1 }}
+                          />
 
                           {projects.map((p) => (
                             <Bar
@@ -1343,7 +1346,10 @@ export default function Home() {
                           {/* Hide YAxis here (it’s fixed on the left) */}
                           <YAxis hide />
 
-                          <Tooltip content={<GgTooltip />} cursor={false} />
+                          <Tooltip
+                            content={<GgTooltip />}
+                            cursor={{ stroke: 'rgba(0,0,0,0.08)', strokeWidth: 1 }}
+                          />
 
                           {projects.map((p) => (
                             <Bar
