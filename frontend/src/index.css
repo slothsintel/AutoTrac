@@ -6,7 +6,84 @@
 :root { --safe-bottom: env(safe-area-inset-bottom); }
 main { padding-bottom: calc(4rem + var(--safe-bottom)); }
 
-/* Kill Recharts mobile focus / outline artifacts */
+/* =========================================================
+   SlothsIntel ↔ AutoTrac light theme bridge
+   - Set your "brand" colors once here.
+   - If you already have exact hex values in slothsintel.com style.css,
+     paste them in place of these.
+   ========================================================= */
+:root {
+  /* Core */
+  --si-bg: #f6faf8;          /* page background */
+  --si-surface: #ffffff;     /* cards / panels */
+  --si-surface-2: #f1f7f4;   /* subtle tinted panels */
+  --si-text: #0f1f17;        /* primary text */
+  --si-muted: rgba(15, 31, 23, 0.68);
+  --si-border: rgba(15, 31, 23, 0.12);
+
+  /* Accent (tune these to match slothsintel.com precisely) */
+  --si-accent: #1f6f5b;      /* primary brand accent */
+  --si-accent-2: #2a8a72;    /* hover / secondary accent */
+  --si-accent-soft: rgba(31, 111, 91, 0.12);
+
+  /* Focus ring */
+  --si-ring: rgba(31, 111, 91, 0.35);
+}
+
+@layer base {
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--si-bg);
+    color: var(--si-text);
+  }
+
+  /* Make default borders feel like the website */
+  hr {
+    border-color: var(--si-border);
+  }
+
+  /* Default focus ring that matches the brand */
+  :focus-visible {
+    outline: 2px solid var(--si-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Optional helper classes (use in JSX if you want perfect consistency) */
+@layer components {
+  .si-card {
+    background: var(--si-surface);
+    border: 1px solid var(--si-border);
+    border-radius: 16px;
+  }
+
+  .si-soft {
+    background: var(--si-surface-2);
+    border: 1px solid var(--si-border);
+    border-radius: 16px;
+  }
+
+  .si-btn {
+    background: var(--si-accent);
+    color: #fff;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .si-btn:hover { background: var(--si-accent-2); }
+
+  .si-pill {
+    background: rgba(255,255,255,0.92);
+    color: var(--si-muted);
+    border: 1px solid var(--si-border);
+    border-radius: 9999px;
+  }
+}
+
+/* =========================================================
+   Recharts: kill mobile focus / outline artifacts
+   ========================================================= */
 .recharts-tooltip-wrapper {
   outline: none !important;
 }
@@ -43,8 +120,6 @@ main { padding-bottom: calc(4rem + var(--safe-bottom)); }
 /* =========================================================
    Recharts v3 (touch): remove tap cursor + active overlays
    ========================================================= */
-
-/* Tooltip cursor layer (can be rect/line/path depending on chart) */
 .recharts-tooltip-cursor,
 .recharts-tooltip-cursor * {
   display: none !important;
@@ -52,7 +127,6 @@ main { padding-bottom: calc(4rem + var(--safe-bottom)); }
   fill: transparent !important;
 }
 
-/* Some v3 builds attach cursor under a "recharts-cursor" class */
 .recharts-cursor,
 .recharts-cursor * {
   display: none !important;
@@ -60,14 +134,12 @@ main { padding-bottom: calc(4rem + var(--safe-bottom)); }
   fill: transparent !important;
 }
 
-/* Active shape/outline on tap (sometimes drawn separately) */
 .recharts-active-bar,
 .recharts-active-bar * {
   stroke: transparent !important;
   outline: none !important;
 }
 
-/* If the browser is drawing focus outlines around SVG/foreignObject */
 .recharts-tooltip-wrapper,
 .recharts-tooltip-wrapper * ,
 svg:focus,
@@ -77,14 +149,17 @@ svg foreignObject * {
   outline: none !important;
 }
 
-body { outline: 4px solid red !important; }
-
+/* =========================================================
+   Select chevron styling for your pill select
+   ========================================================= */
 select.pill-btn {
   appearance: none;
   padding-right: 28px;
+
+  /* Use your brand-muted white chevron instead of hard white */
   background-image:
-    linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.7) 50%),
-    linear-gradient(135deg, rgba(255,255,255,0.7) 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.85) 50%),
+    linear-gradient(135deg, rgba(255,255,255,0.85) 50%, transparent 50%);
   background-position:
     calc(100% - 16px) 50%,
     calc(100% - 12px) 50%;

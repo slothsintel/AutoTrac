@@ -413,8 +413,12 @@ function ManualTimeModal(props: {
               onChange={(e) =>
                 setDraft((d) => ({ ...d, projectId: e.target.value }))
               }
-              className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                         text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+              className="w-full px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
             >
               <option value="" disabled>
                 Select a project…
@@ -438,8 +442,12 @@ function ManualTimeModal(props: {
                 onChange={(e) =>
                   setDraft((d) => ({ ...d, date: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                className="w-full px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
               />
             </div>
 
@@ -486,8 +494,12 @@ function ManualTimeModal(props: {
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, startTime: e.target.value }))
                   }
-                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                      className="w-full px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
                 />
               </div>
               <div>
@@ -500,8 +512,12 @@ function ManualTimeModal(props: {
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, endTime: e.target.value }))
                   }
-                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                          className="w-full ppx-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
                 />
               </div>
             </div>
@@ -517,8 +533,12 @@ function ManualTimeModal(props: {
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, startTime: e.target.value }))
                   }
-                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                  className="w-full px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
                 />
               </div>
               <div>
@@ -535,8 +555,12 @@ function ManualTimeModal(props: {
                     }))
                   }
                   placeholder="e.g. 45"
-                  className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                             text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+                  className="w-full px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
                 />
               </div>
             </div>
@@ -552,8 +576,12 @@ function ManualTimeModal(props: {
               onChange={(e) =>
                 setDraft((d) => ({ ...d, note: e.target.value }))
               }
-              className="w-full px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-                         text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700"
+              className="w-full px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
             />
           </div>
 
@@ -1045,7 +1073,7 @@ export default function Home() {
 
 
   return (
-    <div className="mx-auto max-w-md px-3 py-3 text-neutral-900 dark:text-neutral-100">
+    <div className="mx-auto max-w-md px-3 py-3 text-[var(--si-text)] dark:text-neutral-100">
       <div className="mb-4 space-y-2">
         {/* Row 1: filters */}
         <div className="flex gap-2 flex-nowrap">
@@ -1055,8 +1083,12 @@ export default function Home() {
               setFilter(e.target.value);
               setScrollToRightToken((n) => n + 1);
             }}
-            className="min-w-0 w-[120px] max-w-[120px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+            className="min-w-0 w-[120px] max-w-[120px] px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            truncate"
           >
             <option value="All">All</option>
@@ -1073,8 +1105,12 @@ export default function Home() {
               setPeriod(e.target.value as "Month" | "Year");
               setScrollToRightToken((n) => n + 1);
             }}
-            className="flex-1 min-w-0 px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            truncate"
             title="Period"
           >
@@ -1085,8 +1121,12 @@ export default function Home() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="min-w-0 w-[85px] max-w-[85px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+            className="min-w-0 w-[85px] max-w-[85px] px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            truncate"
             title="Year"
           >
@@ -1101,8 +1141,12 @@ export default function Home() {
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
             disabled={period === "Year"}
-            className="min-w-0 w-[70px] max-w-[70px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+            className="min-w-0 w-[70px] max-w-[70px] px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            disabled:opacity-50 truncate"
             title="Month"
           >
@@ -1118,8 +1162,12 @@ export default function Home() {
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => setManualOpen(true)}
-            className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+            className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            disabled:opacity-50 truncate"
             title="Add manual time"
           >
@@ -1128,8 +1176,12 @@ export default function Home() {
 
           <button
           onClick={exportJson}
-          className="px-4 py-2 rounded-xl border bg-white dark:bg-neutral-800
-           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+          className="px-4 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            disabled:opacity-50 truncate"
           title="Export filtered data as JSON"
         >
@@ -1138,8 +1190,12 @@ export default function Home() {
 
         <button
           onClick={exportCsv}
-          className="px-4 py-2 rounded-xl border bg-white dark:bg-neutral-800
-           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+          className="px-4 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            disabled:opacity-50 truncate"
           title="Export filtered data as CSV"
         >
@@ -1148,8 +1204,12 @@ export default function Home() {
 
           <button
             onClick={() => loadAll({ scrollCharts: true })}
-            className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800
-           text-neutral-900 dark:text-neutral-100 border-neutral-300 dark:border-neutral-700
+            className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border
+           bg-[var(--si-surface)]
+           text-[var(--si-text)]
+           border-[var(--si-border)]
+           hover:bg-[var(--si-surface-2)]
+           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            disabled:opacity-50 truncate"
             title="Refresh"
           >
@@ -1171,19 +1231,22 @@ export default function Home() {
       >
         <div className="space-y-6">
           <div>
-            <p className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+            <p className="text-xs mb-2 text-[var(--si-muted)] dark:text-neutral-400">
               Daily time (hours) — stacked by project
             </p>
 
-           <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
+           <div className="rounded-2xl p-2 shadow-sm border bg-[var(--si-surface)] border-[var(--si-border)] dark:bg-neutral-800 dark:border-neutral-700">
               {/* ✅ Fixed legend */}
-              <div className="sticky top-0 z-10 bg-white pb-2">
+              <div
+                className="sticky top-0 z-10 pb-2
+                          bg-[var(--si-surface)]"
+              >
                 <FixedLegend projects={projects} />
               </div>
 
               <div className="flex items-stretch">
                 {/* ✅ Fixed Y-axis */}
-                <div className="sticky left-0 z-10 bg-white pr-2 border-r border-neutral-200">
+                <div className="sticky left-0 z-10 bg-[var(--si-surface)] pr-2 border-[var(--si-border)]">
                   <div className="h-56 w-[40px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -1274,19 +1337,22 @@ export default function Home() {
           </div>
 
           <div>
-            <p className="text-xs mb-2 text-neutral-600 dark:text-neutral-400">
+            <p className="text-xs mb-2 text-[var(--si-muted)] dark:text-neutral-400">
               Daily income (£) — stacked by project (auto FX)
             </p>
 
-            <div className="rounded-2xl bg-white p-2 shadow-sm border border-neutral-200">
+            <div className="rounded-2xl p-2 shadow-sm border bg-[var(--si-surface)] border-[var(--si-border)] dark:bg-neutral-800 dark:border-neutral-700">
               {/* ✅ Fixed legend */}
-              <div className="sticky top-0 z-10 bg-white pb-2">
+              <div
+                className="sticky top-0 z-10 pb-2
+                          bg-[var(--si-surface)]"
+              >
                 <FixedLegend projects={projects} />
               </div>
 
               <div className="flex items-stretch">
                 {/* ✅ Fixed Y-axis */}
-                <div className="sticky left-0 z-10 bg-white pr-2 border-r border-neutral-200">
+                <div className="sticky left-0 z-10 bg-[var(--si-surface)] pr-2 border-[var(--si-border)]">
                   <div className="h-56 w-[40px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
