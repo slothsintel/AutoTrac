@@ -84,22 +84,22 @@ export default function Projects() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-3 py-3">
-      <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+    <div className="mx-auto max-w-md px-3 py-3 text-[var(--si-text)] dark:text-neutral-100">
+      <div className="rounded-2xl border border-[var(--si-border)] dark:border-neutral-800 bg-[var(--si-surface)] dark:bg-neutral-900 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+            <div className="text-lg font-semibold text-[var(--si-text)] dark:text-neutral-100">
               Projects
             </div>
-            <div className="text-xs text-neutral-500">
+            <div className="text-xs text-[var(--si-muted)]">
               Create and manage your projects (per account).
             </div>
           </div>
           <button
             onClick={() => void loadProjects()}
             disabled={loading}
-            className="px-3 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700
-                       bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800
+            className="px-3 py-2 rounded-xl border border-[var(--si-border)] dark:border-neutral-700
+                       bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800
                        text-sm font-medium disabled:opacity-50"
           >
             Refresh
@@ -108,29 +108,29 @@ export default function Projects() {
 
         <div className="mt-4 space-y-3">
           <div>
-            <label className="text-xs text-neutral-600 dark:text-neutral-400">
+            <label className="text-xs text-[var(--si-muted)] dark:text-neutral-400">
               Project name
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. AutoTrac"
-              className="mt-1 w-full rounded-xl border border-neutral-200 dark:border-neutral-800
-                         bg-white dark:bg-neutral-950 px-3 py-2 outline-none"
+              className="mt-1 w-full rounded-xl border border-[var(--si-border)] dark:border-neutral-800
+                         bg-[var(--si-surface)] dark:bg-neutral-950 px-3 py-2 outline-none"
               disabled={loading}
             />
           </div>
 
           <div>
-            <label className="text-xs text-neutral-600 dark:text-neutral-400">
+            <label className="text-xs text-[var(--si-muted)] dark:text-neutral-400">
               Description (optional)
             </label>
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Short note..."
-              className="mt-1 w-full rounded-xl border border-neutral-200 dark:border-neutral-800
-                         bg-white dark:bg-neutral-950 px-3 py-2 outline-none"
+              className="mt-1 w-full rounded-xl border border-[var(--si-border)] dark:border-neutral-800
+                         bg-[var(--si-surface)] dark:bg-neutral-950 px-3 py-2 outline-none"
               disabled={loading}
             />
           </div>
@@ -138,7 +138,7 @@ export default function Projects() {
           <button
             onClick={() => void createProject()}
             disabled={loading || !canCreate}
-            className="w-full rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900
+            className="w-full rounded-xl bg-[var(--si-accent)] text-white dark:bg-white dark:text-neutral-900
                        px-4 py-2 font-semibold disabled:opacity-50"
           >
             {loading ? "Please wait..." : "Add project"}
@@ -146,7 +146,7 @@ export default function Projects() {
         </div>
 
         <div className="mt-6">
-          <div className="text-xs text-neutral-500 mb-2">
+          <div className="text-xs text-[var(--si-muted)] mb-2">
             Your projects ({projects.length})
           </div>
 
@@ -154,15 +154,14 @@ export default function Projects() {
             {projects.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between gap-3 rounded-xl border
-                           border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-neutral-950/40 px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-xl border border-[var(--si-border)] dark:border-neutral-800 bg-[var(--si-surface)] dark:bg-neutral-950/40 px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                  <div className="text-sm font-medium text-[var(--si-text)] dark:text-neutral-100 truncate">
                     {p.name}
                   </div>
                   {p.description ? (
-                    <div className="text-xs text-neutral-500 truncate">
+                    <div className="text-xs text-[var(--si-muted)] dark:text-neutral-500 truncate">
                       {p.description}
                     </div>
                   ) : null}
@@ -171,9 +170,8 @@ export default function Projects() {
                 <button
                   onClick={() => void deleteProject(p.id)}
                   disabled={loading}
-                  className="px-3 py-1.5 rounded-xl border border-neutral-300 dark:border-neutral-700
-                             bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800
-                             text-xs font-semibold text-rose-600 dark:text-rose-400 disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-xl border border-[var(--si-border)] dark:border-neutral-700 text-xs font-semibold disabled:opacity-50
+                             bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800 text-rose-600 dark:text-rose-400"
                 >
                   Delete
                 </button>
@@ -181,7 +179,7 @@ export default function Projects() {
             ))}
 
             {!loading && projects.length === 0 ? (
-              <div className="text-sm text-neutral-500 py-4">
+              <div className="text-sm text-[var(--si-muted)] dark:text-neutral-500 py-4">
                 No projects yet. Create your first one above.
               </div>
             ) : null}

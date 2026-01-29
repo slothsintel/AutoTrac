@@ -176,14 +176,14 @@ export default function Incomes() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-3 py-4">
-      <div className="flex items-center gap-2 mb-3 text-neutral-900 dark:text-neutral-100">
+    <div className="mx-auto max-w-md px-3 py-4 text-[var(--si-text)] dark:text-neutral-100">
+      <div className="flex items-center gap-2 mb-3 text-[var(--si-text)] dark:text-neutral-100">
         <h1 className="text-lg font-semibold">Incomes</h1>
       </div>
 
       <div className="space-y-3 mb-6">
         <select
-          className="w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border rounded-xl p-2"
+          className="w-full bg-[var(--si-surface)] dark:bg-neutral-800 text-[var(--si-text)] dark:text-neutral-100 border border-[var(--si-border)] rounded-xl p-2"
           value={projectId}
           onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : "")}
         >
@@ -196,7 +196,7 @@ export default function Incomes() {
         </select>
 
         <select
-          className="w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border rounded-xl p-2"
+          className="w-full bg-[var(--si-surface)] dark:bg-neutral-800 text-[var(--si-text)] dark:text-neutral-100 border border-[var(--si-border)] rounded-xl p-2"
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
         >
@@ -211,13 +211,13 @@ export default function Incomes() {
         <input
           type="number"
           placeholder="Amount"
-          className="w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border rounded-xl p-2"
+          className="w-full bg-[var(--si-surface)] dark:bg-neutral-800 text-[var(--si-text)] dark:text-neutral-100 border border-[var(--si-border)] rounded-xl p-2"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
 
         {normCur(currency) !== "GBP" ? (
-          <div className="text-xs text-neutral-600 dark:text-neutral-400">
+          <div className="text-xs text-[var(--si-muted)] dark:text-neutral-400">
             ≈ {inputGBP == null ? "—" : `£${inputGBP.toFixed(2)}`} (auto FX)
           </div>
         ) : null}
@@ -225,20 +225,22 @@ export default function Incomes() {
         <input
           type="text"
           placeholder="Source (optional)"
-          className="w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border rounded-xl p-2"
+          className="w-full bg-[var(--si-surface)] dark:bg-neutral-800 text-[var(--si-text)] dark:text-neutral-100 border border-[var(--si-border)] rounded-xl p-2"
           value={source}
           onChange={(e) => setSource(e.target.value)}
         />
 
         <button
           onClick={addIncome}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-full py-3 font-semibold"
+          className="w-full bg-[var(--si-accent)] hover:opacity-95 text-white rounded-full py-3 font-semibold"
         >
           Add income
         </button>
       </div>
 
-      <div className="text-neutral-900 dark:text-neutral-100 font-semibold mb-2">Recent incomes</div>
+      <div className="text-[var(--si-text)] dark:text-neutral-100 font-semibold mb-2">
+        Recent incomes
+      </div>
 
       <ul className="space-y-2">
         {incomes
@@ -252,32 +254,32 @@ export default function Incomes() {
             return (
               <li
                 key={i.id}
-                className="bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-xl p-3 flex justify-between gap-3"
+                className="bg-[var(--si-surface)] dark:bg-neutral-800 border border-[var(--si-border)] dark:border-neutral-700 rounded-xl p-3 flex justify-between gap-3"
               >
                 <div className="min-w-0">
-                  <div className="font-medium text-neutral-900 dark:text-neutral-100">
+                  <div className="font-medium text-[var(--si-text)] dark:text-neutral-100">
                     {formatMoney(i.currency, i.amount)}
                   </div>
 
                   {cur !== "GBP" ? (
-                    <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                    <div className="text-xs text-[var(--si-muted)] dark:text-neutral-400">
                       ≈ {gbp == null ? "—" : `£${gbp.toFixed(2)}`}
                     </div>
                   ) : null}
 
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                  <div className="text-xs text-[var(--si-muted)] dark:text-neutral-400">
                     {new Date(i.date).toLocaleString()} · #{i.id}
                   </div>
 
-                  <div className="text-xs mt-1 font-medium text-neutral-700 dark:text-neutral-300">
+                  <div className="text-xs mt-1 font-medium text-[var(--si-text)] dark:text-neutral-300">
                     {pname}
                   </div>
                 </div>
 
                 <button
                   onClick={() => deleteIncome(i.id)}
-                  className="h-10 px-3 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
-                             bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  className="h-10 px-3 rounded-xl border border-[var(--si-border)] dark:border-neutral-700 text-sm
+                             bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800"
                   title="Delete income"
                 >
                   🗑️
