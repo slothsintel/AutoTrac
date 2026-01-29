@@ -414,11 +414,11 @@ function ManualTimeModal(props: {
                 setDraft((d) => ({ ...d, projectId: e.target.value }))
               }
               className="w-full px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                        bg-[var(--si-surface)]
+                        text-[var(--si-text)]
+                        border-[var(--si-border)]
+                        hover:bg-[var(--si-surface-2)]
+                        dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
             >
               <option value="" disabled>
                 Select a project…
@@ -443,11 +443,11 @@ function ManualTimeModal(props: {
                   setDraft((d) => ({ ...d, date: e.target.value }))
                 }
                 className="w-full px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                          bg-[var(--si-surface)]
+                          text-[var(--si-text)]
+                          border-[var(--si-border)]
+                          hover:bg-[var(--si-surface-2)]
+                          dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
               />
             </div>
 
@@ -495,11 +495,11 @@ function ManualTimeModal(props: {
                     setDraft((d) => ({ ...d, startTime: e.target.value }))
                   }
                       className="w-full px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                                bg-[var(--si-surface)]
+                                text-[var(--si-text)]
+                                border-[var(--si-border)]
+                                hover:bg-[var(--si-surface-2)]
+                                dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
                 />
               </div>
               <div>
@@ -513,11 +513,11 @@ function ManualTimeModal(props: {
                     setDraft((d) => ({ ...d, endTime: e.target.value }))
                   }
                           className="w-full ppx-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                                    bg-[var(--si-surface)]
+                                    text-[var(--si-text)]
+                                    border-[var(--si-border)]
+                                    hover:bg-[var(--si-surface-2)]
+                                    dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
                 />
               </div>
             </div>
@@ -534,11 +534,11 @@ function ManualTimeModal(props: {
                     setDraft((d) => ({ ...d, startTime: e.target.value }))
                   }
                   className="w-full px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                            bg-[var(--si-surface)]
+                            text-[var(--si-text)]
+                            border-[var(--si-border)]
+                            hover:bg-[var(--si-surface-2)]
+                            dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
                 />
               </div>
               <div>
@@ -556,11 +556,11 @@ function ManualTimeModal(props: {
                   }
                   placeholder="e.g. 45"
                   className="w-full px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                            bg-[var(--si-surface)]
+                            text-[var(--si-text)]
+                            border-[var(--si-border)]
+                            hover:bg-[var(--si-surface-2)]
+                            dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
                 />
               </div>
             </div>
@@ -577,11 +577,11 @@ function ManualTimeModal(props: {
                 setDraft((d) => ({ ...d, note: e.target.value }))
               }
               className="w-full px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                        bg-[var(--si-surface)]
+                        text-[var(--si-text)]
+                        border-[var(--si-border)]
+                        hover:bg-[var(--si-surface-2)]
+                        dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700"
             />
           </div>
 
@@ -1084,12 +1084,12 @@ export default function Home() {
               setScrollToRightToken((n) => n + 1);
             }}
             className="min-w-0 w-[120px] max-w-[120px] px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
-           truncate"
+                      bg-[var(--si-surface)]
+                      text-[var(--si-text)]
+                      border-[var(--si-border)]
+                      hover:bg-[var(--si-surface-2)]
+                      dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                      truncate"
           >
             <option value="All">All</option>
             {projects.map((p) => (
@@ -1106,12 +1106,12 @@ export default function Home() {
               setScrollToRightToken((n) => n + 1);
             }}
             className="flex-1 min-w-0 px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
-           truncate"
+                      bg-[var(--si-surface)]
+                      text-[var(--si-text)]
+                      border-[var(--si-border)]
+                      hover:bg-[var(--si-surface-2)]
+                      dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                      truncate"
             title="Period"
           >
             <option value="Month">By month</option>
@@ -1122,12 +1122,12 @@ export default function Home() {
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
             className="min-w-0 w-[85px] max-w-[85px] px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
-           truncate"
+                      bg-[var(--si-surface)]
+                      text-[var(--si-text)]
+                      border-[var(--si-border)]
+                      hover:bg-[var(--si-surface-2)]
+                      dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                      truncate"
             title="Year"
           >
             {yearOptions.map((y) => (
@@ -1142,12 +1142,12 @@ export default function Home() {
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
             disabled={period === "Year"}
             className="min-w-0 w-[70px] max-w-[70px] px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
-           disabled:opacity-50 truncate"
+                      bg-[var(--si-surface)]
+                      text-[var(--si-text)]
+                      border-[var(--si-border)]
+                      hover:bg-[var(--si-surface-2)]
+                      dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                      disabled:opacity-50 truncate"
             title="Month"
           >
             {monthOptions.map((m) => (
@@ -1163,12 +1163,12 @@ export default function Home() {
           <button
             onClick={() => setManualOpen(true)}
             className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
-           disabled:opacity-50 truncate"
+                      bg-[var(--si-surface)]
+                      text-[var(--si-text)]
+                      border-[var(--si-border)]
+                      hover:bg-[var(--si-surface-2)]
+                      dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                      disabled:opacity-50 truncate"
             title="Add manual time"
           >
             Manual
@@ -1177,12 +1177,12 @@ export default function Home() {
           <button
           onClick={exportJson}
           className="px-4 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
-           disabled:opacity-50 truncate"
+                    bg-[var(--si-surface)]
+                    text-[var(--si-text)]
+                    border-[var(--si-border)]
+                    hover:bg-[var(--si-surface-2)]
+                    dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                    disabled:opacity-50 truncate"
           title="Export filtered data as JSON"
         >
           Export JSON
@@ -1205,12 +1205,12 @@ export default function Home() {
           <button
             onClick={() => loadAll({ scrollCharts: true })}
             className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
-           disabled:opacity-50 truncate"
+                      bg-[var(--si-surface)]
+                      text-[var(--si-text)]
+                      border-[var(--si-border)]
+                      hover:bg-[var(--si-surface-2)]
+                      dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                      disabled:opacity-50 truncate"
             title="Refresh"
           >
             Refresh
