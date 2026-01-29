@@ -101,15 +101,20 @@ export default function More() {
             className="
               w-full flex items-center justify-between px-4 py-3 rounded-xl border
               border-[var(--si-border)] dark:border-neutral-700
-              bg-[var(--si-surface)]
+              bg-[var(--si-surface)] dark:bg-neutral-900
               hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800
               text-[var(--si-text)] dark:text-neutral-100
               font-medium
-            "
-          >
+              ">
             <span>Dark mode</span>
-            <span className="text-sm text-[var(--si-muted)] border-[var(--si-border)] dark:border-neutral-700
-                            bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800">
+            <span className="      
+              text-center px-3 py-2 rounded-xl border text-sm font-medium
+              border-[var(--si-border)] dark:border-neutral-700
+              bg-[var(--si-surface)] dark:bg-neutral-900
+              hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800
+              text-[var(--si-text)] dark:text-neutral-100
+              select-none
+              ">
               {theme === "dark" ? "On" : "Off"}
             </span>
           </button>
