@@ -138,7 +138,7 @@ export default function Projects() {
           <button
             onClick={() => void createProject()}
             disabled={loading || !canCreate}
-            className="w-full rounded-xl bg-[var(--si-accent)] text-white dark:bg-white dark:text-neutral-900
+            className="w-full rounded-xl bg-[var(--si-accent)] text-white dark:bg-[var(--si-accent)] dark:text-neutral-100
                        px-4 py-2 font-semibold disabled:opacity-50"
           >
             {loading ? "Please wait..." : "Add project"}
