@@ -108,7 +108,8 @@ export default function More() {
             "
           >
             <span>Dark mode</span>
-            <span className="text-sm text-[var(--si-muted)] dark:text-neutral-400">
+            <span className="text-sm text-[var(--si-muted)] border-[var(--si-border)] dark:border-neutral-700
+                            bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800">
               {theme === "dark" ? "On" : "Off"}
             </span>
           </button>
@@ -124,11 +125,7 @@ export default function More() {
                 className="
                   text-center px-3 py-2 rounded-xl border
                   border-[var(--si-border)] dark:border-neutral-700
-                  bg-[var(--si-surface)]
-                  hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800
-                  text-sm font-medium
-                  text-[var(--si-text)] dark:text-neutral-100
-                "
+                  bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800 text-sm font-medium"
               >
                 {l.label}
               </a>

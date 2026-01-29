@@ -133,12 +133,43 @@ const emptyDailyRow = (date: string, projectNames: string[]): DailyRow => {
 };
 
 // ---------- ggplot-ish styling helpers ----------
-const GG = {
+// We support both light + dark themes so charts match the rest of the UI.
+const GG_LIGHT = {
   grid: "#e5e7eb",
   axis: "#6b7280",
   tooltipBg: "rgba(255,255,255,0.95)",
   tooltipBorder: "#e5e7eb",
+  tooltipText: "#111827",
+  tooltipMuted: "#374151",
 };
+
+const GG_DARK = {
+  grid: "#374151",
+  axis: "#9ca3af",
+  tooltipBg: "rgba(17,24,39,0.95)",
+  tooltipBorder: "#374151",
+  tooltipText: "#f9fafb",
+  tooltipMuted: "#d1d5db",
+};
+
+function getIsDarkNow() {
+  if (typeof document === "undefined") return false;
+  return document.documentElement.classList.contains("dark");
+}
+
+// Keep charts in sync with Tailwind's `.dark` class.
+function useIsDark() {
+  const [isDark, setIsDark] = useState(getIsDarkNow());
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const obs = new MutationObserver(() => setIsDark(getIsDarkNow()));
+    obs.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+
+  return isDark;
+}
 
 // Stable palette + deterministic mapping by project name
 const DEFAULT_COLORS = [
@@ -169,7 +200,7 @@ function formatShortDate(iso: string) {
 
 const NoCursor = () => null;
 
-const GgTooltip = ({ active, payload, label }: any) => {
+const GgTooltip = ({ active, payload, label, gg }: any) => {
   if (!active || !payload?.length) return null;
 
   const rows = payload
@@ -179,12 +210,12 @@ const GgTooltip = ({ active, payload, label }: any) => {
   return (
     <div
       style={{
-        background: GG.tooltipBg,
-        border: `1px solid ${GG.tooltipBorder}`,
+        background: gg?.tooltipBg || GG_LIGHT.tooltipBg,
+        border: `1px solid ${gg?.tooltipBorder || GG_LIGHT.tooltipBorder}`,
         borderRadius: 12,
         padding: "10px 12px",
         fontSize: 12,
-        color: "#111827",
+        color: gg?.tooltipText || GG_LIGHT.tooltipText,
         boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
         minWidth: 180,
       }}
@@ -193,7 +224,7 @@ const GgTooltip = ({ active, payload, label }: any) => {
         {formatShortDate(label)}
       </div>
       {rows.length === 0 ? (
-        <div style={{ color: "#6b7280" }}>No data</div>
+        <div style={{ color: gg?.axis || GG_LIGHT.axis }}>No data</div>
       ) : (
         rows.map((r: any) => (
           <div
@@ -204,7 +235,7 @@ const GgTooltip = ({ active, payload, label }: any) => {
               gap: 12,
             }}
           >
-            <span style={{ color: "#374151" }}>{r.name}</span>
+            <span style={{ color: gg?.tooltipMuted || GG_LIGHT.tooltipMuted }}>{r.name}</span>
             <span style={{ fontWeight: 700 }}>{r.value.toFixed(2)}</span>
           </div>
         ))
@@ -616,9 +647,9 @@ function ManualTimeModal(props: {
   );
 }
 
-function FixedLegend({ projects }: { projects: Project[] }) {
+function FixedLegend({ projects, gg }: { projects: Project[]; gg: typeof GG_LIGHT }) {
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: GG.axis }}>
+    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: gg.axis }}>
       {projects.map((p) => (
         <div key={p.id} className="flex items-center gap-1.5">
           <span
@@ -645,6 +676,9 @@ export default function Home() {
   const [fxRates, setFxRates] = useState<FxRates>({ GBP: 1 });
 
   const [manualOpen, setManualOpen] = useState(false);
+
+  const isDark = useIsDark();
+  const gg = isDark ? GG_DARK : GG_LIGHT;
 
   // ✅ chart scroll containers
   const timeScrollRef = useRef<HTMLDivElement | null>(null);
@@ -1074,6 +1108,34 @@ export default function Home() {
 
   return (
     <div className="mx-auto max-w-md px-3 py-3 text-[var(--si-text)] dark:text-neutral-100">
+      <style>{`
+        /* Scrollbars for the chart panes (match the card/panel in both themes) */
+        .chart-scroll{ scrollbar-gutter: stable both-edges; }
+        .chart-scroll::-webkit-scrollbar{ height: 10px; }
+        .chart-scroll::-webkit-scrollbar-track{
+          background: rgba(0,0,0,0.06);
+          border-radius: 9999px;
+        }
+        .chart-scroll::-webkit-scrollbar-thumb{
+          background: rgba(0,0,0,0.22);
+          border-radius: 9999px;
+          border: 2px solid transparent;
+          background-clip: padding-box;
+        }
+        .dark .chart-scroll::-webkit-scrollbar-track{
+          background: rgba(255,255,255,0.08);
+        }
+        .dark .chart-scroll::-webkit-scrollbar-thumb{
+          background: rgba(255,255,255,0.22);
+        }
+        .chart-scroll{
+          scrollbar-width: thin;
+          scrollbar-color: rgba(0,0,0,0.22) rgba(0,0,0,0.06);
+        }
+        .dark .chart-scroll{
+          scrollbar-color: rgba(255,255,255,0.22) rgba(255,255,255,0.08);
+        }
+      `}</style>
       <div className="mb-4 space-y-2">
         {/* Row 1: filters */}
         <div className="flex gap-2 flex-nowrap">
@@ -1239,14 +1301,14 @@ export default function Home() {
               {/* ✅ Fixed legend */}
               <div
                 className="sticky top-0 z-10 pb-2
-                          bg-[var(--si-surface)]"
+                          bg-[var(--si-surface)] dark:bg-neutral-800"
               >
-                <FixedLegend projects={projects} />
+                <FixedLegend projects={projects} gg={gg} />
               </div>
 
               <div className="flex items-stretch">
                 {/* ✅ Fixed Y-axis */}
-                <div className="sticky left-0 z-10 bg-[var(--si-surface)] pr-2 border-[var(--si-border)]">
+                <div className="sticky left-0 z-10 bg-[var(--si-surface)] dark:bg-neutral-800 pr-2 border-[var(--si-border)] dark:border-neutral-700">
                   <div className="h-56 w-[40px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -1268,9 +1330,9 @@ export default function Home() {
                         ))}
 
                         <YAxis
-                          tick={{ fontSize: 11, fill: "#111827" }}
+                          tick={{ fontSize: 11, fill: gg.axis }}
                           tickLine={false}
-                          axisLine={{ stroke: "#ffffff" }}
+                          axisLine={{ stroke: gg.grid }}
                           width={40}
                         />
 
@@ -1283,7 +1345,7 @@ export default function Home() {
                 </div>
 
                 {/* ✅ Scrollable plot area */}
-                <div className="overflow-x-auto" ref={timeScrollRef}>
+                <div className="overflow-x-auto chart-scroll" ref={timeScrollRef}>
                   <div style={{ width: chartInnerWidthPx(xKeyCount) }}>
                     <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1293,7 +1355,7 @@ export default function Home() {
                           barCategoryGap={10}
                         >
                           <CartesianGrid
-                            stroke={GG.grid}
+                            stroke={gg.grid}
                             strokeDasharray="3 3"
                             vertical={false}
                           />
@@ -1301,7 +1363,7 @@ export default function Home() {
                           <XAxis
                             dataKey="date"
                             tickFormatter={xTickFormatter}
-                            tick={{ fontSize: 11, fill: GG.axis }}
+                            tick={{ fontSize: 11, fill: gg.axis }}
                             tickLine={false}
                             axisLine={false}
                             minTickGap={16}
@@ -1310,7 +1372,7 @@ export default function Home() {
                           {/* Hide YAxis here (it’s fixed on the left) */}
                           <YAxis hide />
 
-                          <Tooltip content={<GgTooltip />} cursor={<NoCursor />} wrapperStyle={{ outline: "none" }} />
+                          <Tooltip content={<GgTooltip gg={gg} />} cursor={<NoCursor />} wrapperStyle={{ outline: "none" }} />
 
                           {projects.map((p) => (
                             <Bar
@@ -1345,14 +1407,14 @@ export default function Home() {
               {/* ✅ Fixed legend */}
               <div
                 className="sticky top-0 z-10 pb-2
-                          bg-[var(--si-surface)]"
+                          bg-[var(--si-surface)] dark:bg-neutral-800"
               >
-                <FixedLegend projects={projects} />
+                <FixedLegend projects={projects} gg={gg} />
               </div>
 
               <div className="flex items-stretch">
                 {/* ✅ Fixed Y-axis */}
-                <div className="sticky left-0 z-10 bg-[var(--si-surface)] pr-2 border-[var(--si-border)]">
+                <div className="sticky left-0 z-10 bg-[var(--si-surface)] dark:bg-neutral-800 pr-2 border-[var(--si-border)] dark:border-neutral-700">
                   <div className="h-56 w-[40px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -1374,9 +1436,9 @@ export default function Home() {
                         ))}
 
                         <YAxis
-                          tick={{ fontSize: 11, fill: "#111827" }}
+                          tick={{ fontSize: 11, fill: gg.axis }}
                           tickLine={false}
-                          axisLine={{ stroke: "#ffffff" }}
+                          axisLine={{ stroke: gg.grid }}
                           width={40}
                         />
 
@@ -1389,7 +1451,7 @@ export default function Home() {
                 </div>
 
                 {/* ✅ Scrollable plot area */}
-                <div className="overflow-x-auto" ref={incomeScrollRef}>
+                <div className="overflow-x-auto chart-scroll" ref={incomeScrollRef}>
                   <div style={{ width: chartInnerWidthPx(xKeyCount) }}>
                     <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1399,7 +1461,7 @@ export default function Home() {
                           barCategoryGap={10}
                         >
                           <CartesianGrid
-                            stroke={GG.grid}
+                            stroke={gg.grid}
                             strokeDasharray="3 3"
                             vertical={false}
                           />
@@ -1407,7 +1469,7 @@ export default function Home() {
                           <XAxis
                             dataKey="date"
                             tickFormatter={xTickFormatter}
-                            tick={{ fontSize: 11, fill: GG.axis }}
+                            tick={{ fontSize: 11, fill: gg.axis }}
                             tickLine={false}
                             axisLine={false}
                             minTickGap={16}
@@ -1416,7 +1478,7 @@ export default function Home() {
                           {/* Hide YAxis here (it’s fixed on the left) */}
                           <YAxis hide />
 
-                          <Tooltip content={<GgTooltip />} cursor={<NoCursor />} wrapperStyle={{ outline: "none" }} />
+                          <Tooltip content={<GgTooltip gg={gg} />} cursor={<NoCursor />} wrapperStyle={{ outline: "none" }} />
 
                           {projects.map((p) => (
                             <Bar
