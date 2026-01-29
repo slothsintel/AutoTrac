@@ -129,12 +129,12 @@ ${Ce}
            hover:bg-[var(--si-surface-2)]
            dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
            disabled:opacity-50 truncate`,title:"Export filtered data as JSON",children:"Export JSON"}),C.jsx("button",{onClick:ze,className:`px-4 py-2 rounded-xl border
-           bg-[var(--si-surface)]
-           text-[var(--si-text)]
-           border-[var(--si-border)]
-           hover:bg-[var(--si-surface-2)]
-           dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700
-           disabled:opacity-50 truncate`,title:"Export filtered data as CSV",children:"Export CSV"}),C.jsx("button",{onClick:()=>q({scrollCharts:!0}),className:`min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border
+                    bg-[var(--si-surface)]
+                    text-[var(--si-text)]
+                    border-[var(--si-border)]
+                    hover:bg-[var(--si-surface-2)]
+                    dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                    disabled:opacity-50 truncate`,title:"Export filtered data as CSV",children:"Export CSV"}),C.jsx("button",{onClick:()=>q({scrollCharts:!0}),className:`min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border
            bg-[var(--si-surface)]
            text-[var(--si-text)]
            border-[var(--si-border)]
