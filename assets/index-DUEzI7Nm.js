@@ -193,12 +193,18 @@ ${De}
                          bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold`,children:"Logout"})]}),C.jsx("p",{className:"text-[11px] text-[var(--si-muted)]",children:"Logout clears the token stored on this device."})]})}),C.jsx(hl,{title:"More",subtitle:"Preferences & app information",children:C.jsxs("div",{className:"space-y-4",children:[C.jsxs("button",{onClick:d,className:`
               w-full flex items-center justify-between px-4 py-3 rounded-xl border
               border-[var(--si-border)] dark:border-neutral-700
-              bg-[var(--si-surface)]
+              bg-[var(--si-surface)] dark:bg-neutral-900
               hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800
               text-[var(--si-text)] dark:text-neutral-100
               font-medium
-            `,children:[C.jsx("span",{children:"Dark mode"}),C.jsx("span",{className:`text-sm text-[var(--si-muted)] border-[var(--si-border)] dark:border-neutral-700
-                            bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800`,children:e==="dark"?"On":"Off"})]}),C.jsx("div",{className:"grid grid-cols-3 gap-2",children:m.map(g=>C.jsx("a",{href:g.href,target:"_blank",rel:"noreferrer",className:`
+              `,children:[C.jsx("span",{children:"Dark mode"}),C.jsx("span",{className:`      
+              text-center px-3 py-2 rounded-xl border text-sm font-medium
+              border-[var(--si-border)] dark:border-neutral-700
+              bg-[var(--si-surface)] dark:bg-neutral-900
+              hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800
+              text-[var(--si-text)] dark:text-neutral-100
+              select-none
+              `,children:e==="dark"?"On":"Off"})]}),C.jsx("div",{className:"grid grid-cols-3 gap-2",children:m.map(g=>C.jsx("a",{href:g.href,target:"_blank",rel:"noreferrer",className:`
                   text-center px-3 py-2 rounded-xl border
                   border-[var(--si-border)] dark:border-neutral-700
                   bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800 text-sm font-medium`,children:g.label},g.label))})]})})]})}const nu=({to:e,label:t,icon:n})=>C.jsxs(Q2,{to:e,className:({isActive:r})=>`flex flex-col items-center justify-center gap-1 flex-1 py-2
