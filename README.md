@@ -247,7 +247,8 @@ Render automatically redeploys the frontend.
 ## Backend
 
 ```bash
-git add backend
+cd backends
+git add AutoTrac
 git commit -m "Deploy backend updates"
 git push
 ```
