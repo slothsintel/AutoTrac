@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const API_BASE =
-  (import.meta as any).env?.VITE_API_BASE || "https://autotrac-35sx.onrender.com";
+  (import.meta as any).env?.VITE_API_BASE || "https://autotrac-backend.onrender.com";
 
 const TOKEN_KEY = "autotrac_token";
 
