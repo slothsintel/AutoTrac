@@ -83,16 +83,47 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
 # Architecture
 
 ```
-autotrac/
-├── frontend/          # React + Vite + TypeScript PWA
-├── backend/
-│   └── app/           # FastAPI backend
-│       ├── main.py
-│       ├── models.py
-│       ├── schemas.py
-│       ├── db.py
-│       └── auth/
+├── AutoTrac
+│   └── frontend
+│       ├── postcss.config.js
+│       ├── src
+│       ├── tsconfig.app.json
+│       ├── tsconfig.node.json
+│       ├── package-lock.json
+│       ├── index.html
+│       ├── dist
+│       ├── vite.config.ts
+│       ├── tsconfig.json
+│       ├── tailwind.config.js
+│       ├── public
+│       ├── package.json
+│       ├── node_modules
+│       ├── eslint.config.js
+│       └── README.md
+├── autotrac.db
+├── autotrac.svg
+├── requirements.txt
+├── package-lock.json
 └── README.md
+
+├── backend
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── __init__.cpython-311.pyc
+│   └── app
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   ├── __init__.cpython-311.pyc
+│       │   ├── db.cpython-311.pyc
+│       │   ├── main.cpython-311.pyc
+│       │   ├── models.cpython-311.pyc
+│       │   └── schemas.cpython-311.pyc
+│       ├── db.py
+│       ├── main.py
+│       ├── models.py
+│       └── schemas.py
+├── requirements.txt
+└── runtime.txt
 ```
 
 ## Tech Stack
@@ -172,7 +203,7 @@ export SECRET_KEY=dev-secret
 Run the backend:
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn backend.app.main:app --host 0.0.0.0 --port 10000
 ```
 
 Backend runs at:
@@ -267,13 +298,7 @@ Render automatically redeploys the backend service.
 
 # Contribution
 
-Maintained by **Sloths Fin** of [**Sloths Intel GitHub**](https://github.com/slothsintel), and [**Daddy Sloth Github**](https://github.com/drxilu).
-
----
-
-# About Sloths Fin
-
-A financial brand under [**Sloths Intel**](https://slothsintel.com), specialising in financial technology development and financial data pipelines.
+Maintained by [**Sloths Intel GitHub**](https://github.com/slothsintel), and [**Daddy Sloth Github**](https://github.com/drxilu).
 
 ---
 
