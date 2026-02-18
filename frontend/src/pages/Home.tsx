@@ -173,14 +173,18 @@ function useIsDark() {
 
 // Stable palette + deterministic mapping by project name
 const DEFAULT_COLORS = [
-  "#3b82f6",
-  "#22c55e",
-  "#ee9ef8",
-  "#f59e0b",
-  "#6851a0",
+  "#ff0000",
+  "#ff6003",
+  "#ffe600",
+  "#1eff00",
+  "#00ff9d",
   "#71ccc1",
-  "#f36060",
-  "#698366",
+  "#0400ff",
+  "#f700ff",
+  "#ff7c7c",
+  "#ffb477",
+  "#fbfd83",
+  "#83ff83",
 ];
 
 function colorForProject(name: string) {
