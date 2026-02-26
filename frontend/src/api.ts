@@ -9,9 +9,7 @@ const TOKEN_KEY = "autotrac_token";
 const api = axios.create({
   baseURL: API_BASE,
   timeout: 15000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
 api.interceptors.request.use((config) => {
@@ -29,6 +27,8 @@ export const endpoints = {
   verify: "/auth/verify",
   login: "/auth/login",
   me: "/auth/me",
+  // ✅ delete account (DELETE /auth/me)
+  deleteMe: "/auth/me",
 
   // ✅ password reset
   forgotPassword: "/auth/forgot-password",
@@ -39,8 +39,7 @@ export const endpoints = {
   timeEntries: "/time-entries/",
   stopEntry: (id: number) => `/time-entries/${id}/stop`,
   incomes: "/incomes/",
-  exportProjectIncomesCsv: (projectId: number) =>
-    `/projects/${projectId}/incomes/export`,
+  exportProjectIncomesCsv: (projectId: number) => `/projects/${projectId}/incomes/export`,
 };
 
 export function setToken(token: string) {

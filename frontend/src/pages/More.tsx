@@ -17,6 +17,7 @@ export default function More() {
   const [me, setMe] = useState<Me | null>(null);
   const [meErr, setMeErr] = useState<string | null>(null);
   const [loadingMe, setLoadingMe] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -57,6 +58,25 @@ export default function More() {
     window.location.href = "/";
   };
 
+  const deleteAccount = async () => {
+    const ok = window.confirm(
+      "Delete your account permanently?\n\nThis will remove your user and all associated data. This cannot be undone."
+    );
+    if (!ok) return;
+
+    setDeleting(true);
+    setMeErr(null);
+    try {
+      await api.delete(endpoints.deleteMe);
+      clearToken();
+      window.location.href = "/";
+    } catch (e: any) {
+      setMeErr(e?.response?.data?.detail || e?.message || "Failed to delete account");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-md px-3 py-3 text-[var(--si-text)] dark:text-neutral-100">
       <FeedCard title="Account" subtitle="Signed-in user on this device">
@@ -69,7 +89,16 @@ export default function More() {
             {meErr ? <div className="text-xs text-red-500 mt-1">{meErr}</div> : null}
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => void deleteAccount()}
+              disabled={deleting}
+              className="px-3 py-2 rounded-xl border border-[var(--si-border)] dark:border-neutral-700
+                         bg-rose-800 hover:bg-rose-900 text-white text-sm font-semibold"
+            >
+              {deleting ? "Deleting..." : "Delete account"}
+            </button>
+
             <button
               onClick={() => void loadMe()}
               className="px-3 py-2 rounded-xl border border-[var(--si-border)] dark:border-neutral-700
