@@ -1232,7 +1232,7 @@ export default function Home() {
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => setManualOpen(true)}
-            className="min-w-0 w-[95px] max-w-[100px] px-3 py-2 rounded-xl border
+            className="px-4 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -1277,14 +1277,14 @@ export default function Home() {
 
             <button
               onClick={() => loadAll({ scrollCharts: true })}
-              className="min-w-0 w-[95px] max-w-[100px] px-3 py-2 rounded-xl border
-                        bg-[var(--si-surface)]
-                        text-[var(--si-text)]
-                        border-[var(--si-border)]
-                        hover:bg-[var(--si-surface-2)]
-                        dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                        disabled:opacity-50 truncate
-                        text-xs font-normal"
+            className="px-4 py-2 rounded-xl border
+                      bg-[var(--si-surface)]
+                      text-[var(--si-text)]
+                      border-[var(--si-border)]
+                      hover:bg-[var(--si-surface-2)]
+                      dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                      disabled:opacity-50 truncate
+                      text-xs font-normal"
               title="Refresh"
             >
               Refresh
