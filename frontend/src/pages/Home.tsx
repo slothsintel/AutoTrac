@@ -1156,7 +1156,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       truncate
-                      text-sm font-small"
+                      text-xs font-normal"
           >
             <option value="All">All</option>
             {projects.map((p) => (
@@ -1179,7 +1179,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       truncate
-                      text-sm font-small"
+                      text-xs font-normal"
             title="Period"
           >
             <option value="Month">By month</option>
@@ -1196,7 +1196,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       truncate
-                      text-sm font-small"
+                      text-xs font-normal"
             title="Year"
           >
             {yearOptions.map((y) => (
@@ -1217,7 +1217,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50 truncate
-                      text-sm font-small"
+                      text-xs font-normal"
             title="Month"
           >
             {monthOptions.map((m) => (
@@ -1232,63 +1232,63 @@ export default function Home() {
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => setManualOpen(true)}
-            className="min-w-0 w-[90px] max-w-[100px] px-3 py-2 rounded-xl border
+            className="min-w-0 w-[95px] max-w-[100px] px-3 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50 truncate
-                      text-sm font-small"
+                      text-xs font-normal"
             title="Add manual time"
           >
             Manual
           </button>
 
           <button
-          onClick={exportJson}
-          className="px-4 py-2 rounded-xl border
-                    bg-[var(--si-surface)]
-                    text-[var(--si-text)]
-                    border-[var(--si-border)]
-                    hover:bg-[var(--si-surface-2)]
-                    dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                    disabled:opacity-50 truncate
-                    text-sm font-small"
-          title="Export filtered data as JSON"
-        >
-          Export JSON
-        </button>
-
-        <button
-          onClick={exportCsv}
-          className="px-4 py-2 rounded-xl border
-                    bg-[var(--si-surface)]
-                    text-[var(--si-text)]
-                    border-[var(--si-border)]
-                    hover:bg-[var(--si-surface-2)]
-                    dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                    disabled:opacity-50 truncate
-                    text-sm font-small"
-          title="Export filtered data as CSV"
-        >
-          Export CSV
-        </button>
-
-          <button
-            onClick={() => loadAll({ scrollCharts: true })}
-            className="min-w-0 w-[90px] max-w-[100px] px-3 py-2 rounded-xl border
+            onClick={exportJson}
+            className="px-4 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50 truncate
-                      text-sm font-small"
-            title="Refresh"
+                      text-xs font-normal"
+            title="Export filtered data as JSON"
           >
-            Refresh
+            Export JSON
           </button>
+
+          <button
+            onClick={exportCsv}
+            className="px-4 py-2 rounded-xl border
+                      bg-[var(--si-surface)]
+                      text-[var(--si-text)]
+                      border-[var(--si-border)]
+                      hover:bg-[var(--si-surface-2)]
+                      dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                      disabled:opacity-50 truncate
+                      text-xs font-normal"
+            title="Export filtered data as CSV"
+          >
+            Export CSV
+          </button>
+
+            <button
+              onClick={() => loadAll({ scrollCharts: true })}
+              className="min-w-0 w-[95px] max-w-[100px] px-3 py-2 rounded-xl border
+                        bg-[var(--si-surface)]
+                        text-[var(--si-text)]
+                        border-[var(--si-border)]
+                        hover:bg-[var(--si-surface-2)]
+                        dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
+                        disabled:opacity-50 truncate
+                        text-xs font-normal"
+              title="Refresh"
+            >
+              Refresh
+            </button>
         </div>
       </div>
 
