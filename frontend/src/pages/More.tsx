@@ -160,7 +160,7 @@ export default function More() {
                 className="
                   text-center px-3 py-2 rounded-xl border
                   border-[var(--si-border)] dark:border-neutral-700
-                  bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800 text-sm font-small"
+                  bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800 text-xs font-normal"
               >
                 {l.label}
               </a>
