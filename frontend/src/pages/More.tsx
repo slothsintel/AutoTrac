@@ -95,7 +95,7 @@ export default function More() {
               onClick={() => void deleteAccount()}
               disabled={deleting}
               className="px-3 py-2 rounded-xl border border-[var(--si-border)] dark:border-neutral-700
-                         bg-red-600 hover:bg-red-700 text-white text-sm font-bold"
+                         bg-red-800 hover:bg-red-900 text-white text-sm font-bold"
             >
               {deleting ? "Deleting..." : "Delete account"}
             </button>
@@ -160,7 +160,7 @@ export default function More() {
                 className="
                   text-center px-3 py-2 rounded-xl border
                   border-[var(--si-border)] dark:border-neutral-700
-                  bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800 text-sm font-medium"
+                  bg-[var(--si-surface)] dark:bg-neutral-900 hover:bg-[var(--si-surface-2)] dark:hover:bg-neutral-800 text-sm font-small"
               >
                 {l.label}
               </a>

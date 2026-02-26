@@ -1155,7 +1155,8 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      truncate"
+                      truncate
+                      text-sm font-small"
           >
             <option value="All">All</option>
             {projects.map((p) => (
@@ -1177,7 +1178,8 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      truncate"
+                      truncate
+                      text-sm font-small"
             title="Period"
           >
             <option value="Month">By month</option>
@@ -1193,7 +1195,8 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      truncate"
+                      truncate
+                      text-sm font-small"
             title="Year"
           >
             {yearOptions.map((y) => (
@@ -1213,7 +1216,8 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      disabled:opacity-50 truncate"
+                      disabled:opacity-50 truncate
+                      text-sm font-small"
             title="Month"
           >
             {monthOptions.map((m) => (
@@ -1234,7 +1238,8 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      disabled:opacity-50 truncate"
+                      disabled:opacity-50 truncate
+                      text-sm font-small"
             title="Add manual time"
           >
             Manual
@@ -1248,7 +1253,8 @@ export default function Home() {
                     border-[var(--si-border)]
                     hover:bg-[var(--si-surface-2)]
                     dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                    disabled:opacity-50 truncate"
+                    disabled:opacity-50 truncate
+                    text-sm font-small"
           title="Export filtered data as JSON"
         >
           Export JSON
@@ -1262,7 +1268,8 @@ export default function Home() {
                     border-[var(--si-border)]
                     hover:bg-[var(--si-surface-2)]
                     dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                    disabled:opacity-50 truncate"
+                    disabled:opacity-50 truncate
+                    text-sm font-small"
           title="Export filtered data as CSV"
         >
           Export CSV
@@ -1276,7 +1283,8 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      disabled:opacity-50 truncate"
+                      disabled:opacity-50 truncate
+                      text-sm font-small"
             title="Refresh"
           >
             Refresh
