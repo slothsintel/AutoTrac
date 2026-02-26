@@ -1228,7 +1228,7 @@ export default function Home() {
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => setManualOpen(true)}
-            className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border
+            className="min-w-0 w-[85px] max-w-[100px] px-3 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -1270,7 +1270,7 @@ export default function Home() {
 
           <button
             onClick={() => loadAll({ scrollCharts: true })}
-            className="min-w-0 w-[80px] max-w-[80px] px-3 py-2 rounded-xl border
+            className="min-w-0 w-[85px] max-w-[100px] px-3 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]

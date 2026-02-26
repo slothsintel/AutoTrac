@@ -33,7 +33,7 @@ export default function Auth({ onAuthed }: { onAuthed: () => void }) {
       if (mode === "register") {
         await api.post(endpoints.register, { email, password });
         setErr(
-          "✅ Account created. Please check your inbox to verify your email, then log in."
+          "Great news: account created! Please check your inbox to verify your email, then log in."
         );
         setMode("login");
         setBusy(false);

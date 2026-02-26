@@ -31,6 +31,7 @@ export default function More() {
   const links = [
     { label: "Privacy", href: "https://slothsintel.com/privacy.html" },
     { label: "Terms", href: "https://slothsintel.com/terms.html" },
+    { label: "Products Hub", href: "https://slothsintel.com/products.html" },
     { label: "GitHub", href: "https://github.com/slothsintel" },
   ];
 
@@ -94,7 +95,7 @@ export default function More() {
               onClick={() => void deleteAccount()}
               disabled={deleting}
               className="px-3 py-2 rounded-xl border border-[var(--si-border)] dark:border-neutral-700
-                         bg-rose-800 hover:bg-rose-900 text-white text-sm font-semibold"
+                         bg-red-600 hover:bg-red-700 text-white text-sm font-bold"
             >
               {deleting ? "Deleting..." : "Delete account"}
             </button>
@@ -149,7 +150,7 @@ export default function More() {
           </button>
 
           {/* Links */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {links.map((l) => (
               <a
                 key={l.label}

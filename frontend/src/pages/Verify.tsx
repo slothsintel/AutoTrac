@@ -31,7 +31,7 @@ export default function Verify() {
 
         if (res.data?.ok) {
           setStatus("ok");
-          setMsg("✅ Email verified! You can now log in and track your income!");
+          setMsg("Great news: email verified! You can now log in and track your income!");
         } else {
           setStatus("err");
           setMsg("Verification failed.");
