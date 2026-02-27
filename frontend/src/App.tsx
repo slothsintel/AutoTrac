@@ -14,17 +14,6 @@ import ResetPassword from "./pages/ResetPassword";
 
 import api, { endpoints, getToken, clearToken } from "./api";
 
-useEffect(() => {
-  const saved = localStorage.getItem("theme"); // "dark" | "light" | null
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-
-  const theme = (saved === "dark" || saved === "light")
-    ? saved
-    : (prefersDark ? "dark" : "light");
-
-  document.documentElement.classList.toggle("dark", theme === "dark");
-}, []);
-
 export default function App() {
   const [ready, setReady] = useState(false);
   const [authed, setAuthed] = useState(false);
