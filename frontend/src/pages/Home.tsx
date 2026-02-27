@@ -1239,7 +1239,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      text-[10px] font-normal"
             title="Add manual time"
           >
             Manual
@@ -1254,7 +1254,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      text-[10px] font-normal"
             title="Export filtered data as JSON"
           >
             Export JSON
@@ -1269,7 +1269,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      text-[10px] font-normal"
             title="Export filtered data as CSV"
           >
             Export CSV
@@ -1284,7 +1284,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      text-[10px] font-normal"
               title="Refresh"
             >
               Refresh
