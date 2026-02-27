@@ -31,7 +31,7 @@ export default function More() {
   const links = [
     { label: "Privacy", href: "https://slothsintel.com/privacy.html" },
     { label: "Terms", href: "https://slothsintel.com/terms.html" },
-    { label: "ProductsHub", href: "https://slothsintel.com/products.html" },
+    { label: "Products Hub", href: "https://slothsintel.com/products.html" },
     { label: "GitHub", href: "https://github.com/slothsintel" },
   ];
 
