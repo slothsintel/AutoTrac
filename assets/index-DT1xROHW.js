@@ -125,21 +125,21 @@ ${De}
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      whitespace-nowrap shrink-0
+                      flex-1
                       text-xs font-normal`,children:[j.jsx("option",{value:"All",children:"All projects"}),e.map(V=>j.jsx("option",{value:V.name,children:V.name},V.id))]}),j.jsxs("select",{value:d,onChange:V=>{h(V.target.value),B(le=>le+1)},className:`flex-1 min-w-0 px-3 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      whitespace-nowrap shrink-0
+                      flex-1
                       text-xs font-normal`,title:"Period",children:[j.jsx("option",{value:"Month",children:"By month"}),j.jsx("option",{value:"Year",children:"By year"})]}),j.jsx("select",{value:p,onChange:V=>y(Number(V.target.value)),className:`min-w-0 w-[85px] max-w-[85px] px-3 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      whitespace-nowrap shrink-0
+                      flex-1
                       text-xs font-normal`,title:"Year",children:se.map(V=>j.jsx("option",{value:V,children:V},V))}),j.jsx("select",{value:b,onChange:V=>x(Number(V.target.value)),disabled:d==="Year",className:`min-w-0 w-[70px] max-w-[70px] px-3 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
@@ -148,7 +148,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Month",children:fe.map(V=>j.jsx("option",{value:V.v,children:V.label},V.v))})]}),j.jsxs("div",{className:"flex gap-2 flex-nowrap",children:[j.jsx("button",{onClick:()=>C(!0),className:`px-3 py-1.5 rounded-xl border
+                      flex-1`,title:"Month",children:fe.map(V=>j.jsx("option",{value:V.v,children:V.label},V.v))})]}),j.jsxs("div",{className:"flex gap-2",children:[j.jsx("button",{onClick:()=>C(!0),className:`px-3 py-1.5 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -156,7 +156,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Add manual time",children:"Manual"}),j.jsx("button",{onClick:Rt,className:`px-3 py-1.5 rounded-xl border
+                      flex-1`,title:"Add manual time",children:"Manual"}),j.jsx("button",{onClick:Rt,className:`px-3 py-1.5 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -164,7 +164,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Export filtered data as JSON",children:"Export JSON"}),j.jsx("button",{onClick:kt,className:`px-3 py-1.5 rounded-xl border
+                      flex-1`,title:"Export filtered data as JSON",children:"Export JSON"}),j.jsx("button",{onClick:kt,className:`px-3 py-1.5 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -172,7 +172,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Export filtered data as CSV",children:"Export CSV"}),j.jsx("button",{onClick:()=>re({scrollCharts:!0}),className:`px-3 py-1.5 rounded-xl border
+                      flex-1`,title:"Export filtered data as CSV",children:"Export CSV"}),j.jsx("button",{onClick:()=>re({scrollCharts:!0}),className:`px-3 py-1.5 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -180,7 +180,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Refresh",children:"Refresh"})]})]}),j.jsx(cae,{open:O,onClose:()=>C(!1),projects:e,onCreated:()=>re({scrollCharts:!0})}),j.jsx(Sl,{title:"Totals overview",subtitle:`Stacked by date (last ${Jie} days) • Swipe left/right on charts`,children:j.jsxs("div",{className:"space-y-6",children:[j.jsxs("div",{children:[j.jsx("p",{className:"text-xs mb-2 text-[var(--si-muted)] dark:text-neutral-400",children:"Daily time (hours) — stacked by project"}),j.jsxs("div",{className:"rounded-2xl p-2 shadow-sm border bg-[var(--si-surface)] border-[var(--si-border)] dark:bg-neutral-800 dark:border-neutral-700",children:[j.jsx("div",{className:`sticky top-0 z-10 pb-2
+                      flex-1`,title:"Refresh",children:"Refresh"})]})]}),j.jsx(cae,{open:O,onClose:()=>C(!1),projects:e,onCreated:()=>re({scrollCharts:!0})}),j.jsx(Sl,{title:"Totals overview",subtitle:`Stacked by date (last ${Jie} days) • Swipe left/right on charts`,children:j.jsxs("div",{className:"space-y-6",children:[j.jsxs("div",{children:[j.jsx("p",{className:"text-xs mb-2 text-[var(--si-muted)] dark:text-neutral-400",children:"Daily time (hours) — stacked by project"}),j.jsxs("div",{className:"rounded-2xl p-2 shadow-sm border bg-[var(--si-surface)] border-[var(--si-border)] dark:bg-neutral-800 dark:border-neutral-700",children:[j.jsx("div",{className:`sticky top-0 z-10 pb-2
                           bg-[var(--si-surface)] dark:bg-neutral-800`,children:j.jsx(C2,{projects:e,gg:M})}),j.jsxs("div",{className:"flex items-stretch",children:[j.jsx("div",{className:"sticky left-0 z-10 bg-[var(--si-surface)] dark:bg-neutral-800 pr-2 border-[var(--si-border)] dark:border-neutral-700",children:j.jsx("div",{className:"h-56 w-[40px]",children:j.jsx(Qf,{width:"100%",height:"100%",children:j.jsxs(cd,{data:G,margin:{top:6,right:0,bottom:6,left:0},barCategoryGap:10,children:[e.map(V=>j.jsx(gu,{dataKey:V.name,stackId:"time",fill:"transparent",fillOpacity:0,isAnimationActive:!1,activeBar:!1},V.id)),j.jsx(xu,{tick:{fontSize:11,fill:M.axis},tickLine:!1,axisLine:{stroke:M.grid},width:40}),j.jsx(bu,{dataKey:"date",hide:!0}),j.jsx(ld,{content:j.jsx(j.Fragment,{}),cursor:j.jsx(md,{}),wrapperStyle:{outline:"none"}})]})})})}),j.jsx("div",{className:"overflow-x-auto chart-scroll",ref:P,children:j.jsx("div",{style:{width:O2(ue)},children:j.jsx("div",{className:"h-56",children:j.jsx(Qf,{width:"100%",height:"100%",children:j.jsxs(cd,{data:G,margin:{top:6,right:12,bottom:6,left:0},barCategoryGap:10,children:[j.jsx(yb,{stroke:M.grid,strokeDasharray:"3 3",vertical:!1}),j.jsx(bu,{dataKey:"date",tickFormatter:be,tick:{fontSize:11,fill:M.axis},tickLine:!1,axisLine:!1,minTickGap:16}),j.jsx(xu,{hide:!0}),j.jsx(ld,{content:j.jsx(A2,{gg:M}),cursor:j.jsx(md,{}),wrapperStyle:{outline:"none"}}),e.map(V=>j.jsx(gu,{dataKey:V.name,stackId:"time",fill:yl(V.name),radius:[6,6,0,0],fillOpacity:.85,activeBar:!1},V.id))]})})})})})]}),j.jsx("div",{className:"mt-2 text-[11px] text-neutral-500",children:"Swipe left/right to view more days"})]})]}),j.jsxs("div",{children:[j.jsx("p",{className:"text-xs mb-2 text-[var(--si-muted)] dark:text-neutral-400",children:"Daily income (£) — stacked by project (auto FX)"}),j.jsxs("div",{className:"rounded-2xl p-2 shadow-sm border bg-[var(--si-surface)] border-[var(--si-border)] dark:bg-neutral-800 dark:border-neutral-700",children:[j.jsx("div",{className:`sticky top-0 z-10 pb-2
                           bg-[var(--si-surface)] dark:bg-neutral-800`,children:j.jsx(C2,{projects:e,gg:M})}),j.jsxs("div",{className:"flex items-stretch",children:[j.jsx("div",{className:"sticky left-0 z-10 bg-[var(--si-surface)] dark:bg-neutral-800 pr-2 border-[var(--si-border)] dark:border-neutral-700",children:j.jsx("div",{className:"h-56 w-[40px]",children:j.jsx(Qf,{width:"100%",height:"100%",children:j.jsxs(cd,{data:ne,margin:{top:6,right:0,bottom:6,left:0},barCategoryGap:10,children:[e.map(V=>j.jsx(gu,{dataKey:V.name,stackId:"income",fill:"transparent",fillOpacity:0,isAnimationActive:!1,activeBar:!1},V.id)),j.jsx(xu,{tick:{fontSize:11,fill:M.axis},tickLine:!1,axisLine:{stroke:M.grid},width:40}),j.jsx(bu,{dataKey:"date",hide:!0}),j.jsx(ld,{content:j.jsx(j.Fragment,{}),cursor:j.jsx(md,{}),wrapperStyle:{outline:"none"}})]})})})}),j.jsx("div",{className:"overflow-x-auto chart-scroll",ref:D,children:j.jsx("div",{style:{width:O2(ue)},children:j.jsx("div",{className:"h-56",children:j.jsx(Qf,{width:"100%",height:"100%",children:j.jsxs(cd,{data:ne,margin:{top:6,right:12,bottom:6,left:0},barCategoryGap:10,children:[j.jsx(yb,{stroke:M.grid,strokeDasharray:"3 3",vertical:!1}),j.jsx(bu,{dataKey:"date",tickFormatter:be,tick:{fontSize:11,fill:M.axis},tickLine:!1,axisLine:!1,minTickGap:16}),j.jsx(xu,{hide:!0}),j.jsx(ld,{content:j.jsx(A2,{gg:M}),cursor:j.jsx(md,{}),wrapperStyle:{outline:"none"}}),e.map(V=>j.jsx(gu,{dataKey:V.name,stackId:"income",fill:yl(V.name),radius:[6,6,0,0],fillOpacity:.85,activeBar:!1},V.id))]})})})})})]}),j.jsx("div",{className:"mt-2 text-[11px] text-neutral-500",children:"Swipe left/right to view more days"})]})]})]})}),j.jsx(Sl,{title:"This week (last 7 days)",children:e.length===0?j.jsx("div",{className:"text-sm text-neutral-500",children:"No projects yet."}):j.jsx("ul",{className:"space-y-2 text-sm",children:e.map(V=>j.jsxs("li",{className:"flex justify-between items-center",children:[j.jsx("span",{className:"font-medium",style:{color:yl(V.name)},children:V.name}),j.jsxs("span",{className:"text-xs text-neutral-600 dark:text-neutral-400",children:["⏱ ",ye(ae[V.name]||0)," · 💰 £",(oe[V.name]||0).toFixed(2)]})]},V.id))})}),j.jsx(Sl,{title:"Recent time entries",subtitle:"Latest 10",children:j.jsx("ul",{className:"space-y-2",children:Oe.map(V=>{const le=te[V.project_id]||`Project #${V.project_id}`,Te=te[V.project_id]?yl(le):void 0;return j.jsxs("li",{className:`flex items-center justify-between gap-3 border border-neutral-200 dark:border-neutral-700
                            bg-white dark:bg-neutral-800 rounded-xl px-3 py-2`,children:[j.jsxs("div",{className:"min-w-0",children:[j.jsxs("div",{style:Te?{color:Te}:void 0,children:[le," · #",V.id]}),j.jsxs("div",{className:"text-xs text-neutral-600 dark:text-neutral-400",children:[V.end_time?"stopped":"running"," ·"," ",new Date(V.start_time).toLocaleString()]})]}),j.jsx("button",{onClick:()=>Z(V.id),className:`px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm
