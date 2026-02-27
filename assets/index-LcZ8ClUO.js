@@ -148,7 +148,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Month",children:fe.map(V=>j.jsx("option",{value:V.v,children:V.label},V.v))})]}),j.jsxs("div",{className:"flex gap-2 flex-nowrap",children:[j.jsx("button",{onClick:()=>C(!0),className:`px-6 py-2 rounded-xl border
+                      whitespace-nowrap shrink-0`,title:"Month",children:fe.map(V=>j.jsx("option",{value:V.v,children:V.label},V.v))})]}),j.jsxs("div",{className:"flex gap-2 flex-nowrap",children:[j.jsx("button",{onClick:()=>C(!0),className:`px-3 py-1.5 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -156,7 +156,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Add manual time",children:"Manual"}),j.jsx("button",{onClick:Rt,className:`px-6 py-2 rounded-xl border
+                      whitespace-nowrap shrink-0`,title:"Add manual time",children:"Manual"}),j.jsx("button",{onClick:Rt,className:`px-3 py-1.5 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -164,7 +164,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Export filtered data as JSON",children:"Export JSON"}),j.jsx("button",{onClick:kt,className:`px-6 py-2 rounded-xl border
+                      whitespace-nowrap shrink-0`,title:"Export filtered data as JSON",children:"Export JSON"}),j.jsx("button",{onClick:kt,className:`px-3 py-1.5 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -172,7 +172,7 @@ ${De}
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0`,title:"Export filtered data as CSV",children:"Export CSV"}),j.jsx("button",{onClick:()=>re({scrollCharts:!0}),className:`px-6 py-2 rounded-xl border
+                      whitespace-nowrap shrink-0`,title:"Export filtered data as CSV",children:"Export CSV"}),j.jsx("button",{onClick:()=>re({scrollCharts:!0}),className:`px-3 py-1.5 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
