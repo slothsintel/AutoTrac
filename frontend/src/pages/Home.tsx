@@ -1155,7 +1155,7 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      whitespace-nowrap shrink-0
+                      flex-1
                       text-xs font-normal"
           >
             <option value="All">All projects</option>
@@ -1178,7 +1178,7 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      whitespace-nowrap shrink-0
+                      flex-1
                       text-xs font-normal"
             title="Period"
           >
@@ -1195,7 +1195,7 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      whitespace-nowrap shrink-0
+                      flex-1
                       text-xs font-normal"
             title="Year"
           >
@@ -1218,7 +1218,7 @@ export default function Home() {
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0"
+                      flex-1"
             title="Month"
           >
             {monthOptions.map((m) => (
@@ -1230,7 +1230,7 @@ export default function Home() {
         </div>
 
         {/* Row 2: actions */}
-        <div className="flex gap-2 flex-nowrap">
+        <div className="flex gap-2">
           <button
             onClick={() => setManualOpen(true)}
             className="px-3 py-1.5 rounded-xl border
@@ -1241,7 +1241,7 @@ export default function Home() {
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0"
+                      flex-1"
             title="Add manual time"
           >
             Manual
@@ -1257,7 +1257,7 @@ export default function Home() {
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0"
+                      flex-1"
             title="Export filtered data as JSON"
           >
             Export JSON
@@ -1273,7 +1273,7 @@ export default function Home() {
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0"
+                      flex-1"
             title="Export filtered data as CSV"
           >
             Export CSV
@@ -1289,7 +1289,7 @@ export default function Home() {
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50
                       text-xs font-normal
-                      whitespace-nowrap shrink-0"
+                      flex-1"
             title="Refresh"
           >
             Refresh
