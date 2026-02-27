@@ -1230,10 +1230,10 @@ export default function Home() {
         </div>
 
         {/* Row 2: actions */}
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 flex-nowrap">
           <button
             onClick={() => setManualOpen(true)}
-            className="px-5 py-2 rounded-xl border
+            className="px-6 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -1249,7 +1249,7 @@ export default function Home() {
 
           <button
             onClick={exportJson}
-            className="px-5 py-2 rounded-xl border
+            className="px-6 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -1265,7 +1265,7 @@ export default function Home() {
 
           <button
             onClick={exportCsv}
-            className="px-5 py-2 rounded-xl border
+            className="px-6 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -1281,7 +1281,7 @@ export default function Home() {
 
           <button
             onClick={() => loadAll({ scrollCharts: true })}
-            className="px-5 py-2 rounded-xl border
+            className="px-6 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
