@@ -1155,7 +1155,7 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      truncate
+                      whitespace-nowrap shrink-0
                       text-xs font-normal"
           >
             <option value="All">All projects</option>
@@ -1178,7 +1178,7 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      truncate
+                      whitespace-nowrap shrink-0
                       text-xs font-normal"
             title="Period"
           >
@@ -1195,7 +1195,7 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      truncate
+                      whitespace-nowrap shrink-0
                       text-xs font-normal"
             title="Year"
           >
@@ -1216,8 +1216,9 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      disabled:opacity-50
+                      text-xs font-normal
+                      whitespace-nowrap shrink-0"
             title="Month"
           >
             {monthOptions.map((m) => (
@@ -1238,8 +1239,9 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      disabled:opacity-50
+                      text-xs font-normal
+                      whitespace-nowrap shrink-0"
             title="Add manual time"
           >
             Manual
@@ -1253,8 +1255,9 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      disabled:opacity-50
+                      text-xs font-normal
+                      whitespace-nowrap shrink-0"
             title="Export filtered data as JSON"
           >
             Export JSON
@@ -1268,27 +1271,29 @@ export default function Home() {
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      disabled:opacity-50
+                      text-xs font-normal
+                      whitespace-nowrap shrink-0"
             title="Export filtered data as CSV"
           >
             Export CSV
           </button>
 
-            <button
-              onClick={() => loadAll({ scrollCharts: true })}
+          <button
+            onClick={() => loadAll({ scrollCharts: true })}
             className="px-7 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
-                      disabled:opacity-50 truncate
-                      text-xs font-normal"
-              title="Refresh"
-            >
-              Refresh
-            </button>
+                      disabled:opacity-50
+                      text-xs font-normal
+                      whitespace-nowrap shrink-0"
+            title="Refresh"
+          >
+            Refresh
+          </button>
         </div>
       </div>
 
