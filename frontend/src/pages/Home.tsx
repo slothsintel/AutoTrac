@@ -1156,9 +1156,9 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       truncate
-                      text-xs font-normal"
+                      text-[10px] font-normal"
           >
-            <option value="All">All</option>
+            <option value="All">All projects</option>
             {projects.map((p) => (
               <option key={p.id} value={p.name}>
                 {p.name}
@@ -1179,7 +1179,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       truncate
-                      text-xs font-normal"
+                      text-[10px] font-normal"
             title="Period"
           >
             <option value="Month">By month</option>
@@ -1196,7 +1196,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       truncate
-                      text-xs font-normal"
+                      text-[10px] font-normal"
             title="Year"
           >
             {yearOptions.map((y) => (
@@ -1217,7 +1217,7 @@ export default function Home() {
                       hover:bg-[var(--si-surface-2)]
                       dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-neutral-100
                       disabled:opacity-50 truncate
-                      text-xs font-normal"
+                      text-[10px] font-normal"
             title="Month"
           >
             {monthOptions.map((m) => (
@@ -1232,7 +1232,7 @@ export default function Home() {
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => setManualOpen(true)}
-            className="px-6 py-2 rounded-xl border
+            className="px-7 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -1247,7 +1247,7 @@ export default function Home() {
 
           <button
             onClick={exportJson}
-            className="px-6 py-2 rounded-xl border
+            className="px-7 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -1262,7 +1262,7 @@ export default function Home() {
 
           <button
             onClick={exportCsv}
-            className="px-6 py-2 rounded-xl border
+            className="px-7 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
@@ -1277,7 +1277,7 @@ export default function Home() {
 
             <button
               onClick={() => loadAll({ scrollCharts: true })}
-            className="px-6 py-2 rounded-xl border
+            className="px-7 py-2 rounded-xl border
                       bg-[var(--si-surface)]
                       text-[var(--si-text)]
                       border-[var(--si-border)]
