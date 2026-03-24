@@ -9,10 +9,10 @@
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)]()
 [![Status](https://img.shields.io/badge/Project-Active-brightgreen.svg)]()
 
-[![Static Badge](https://img.shields.io/badge/Sloths_Fin-Powered-brightgreen)]()
+![Org](https://img.shields.io/badge/Research-Sloxen™-black)
 [![Platform](https://img.shields.io/badge/Platform-Andriod%20%7C%20iOS%20%7C%20WIN%20%7C%20Linux%20%7C%20WSL%20%7C%20macOS-lightgrey)]()
 
-**AutoTrac** is developed and maintained by **Sloths Intel**, is a lightweight, mobile-first **time tracking and income tracking PWA** designed for freelancers, consultants, and small teams.
+**AutoTrac** is developed and maintained by **Sloxen™**, is a lightweight, mobile-first **time tracking and income tracking PWA** designed for freelancers, consultants, and small teams.
 It focuses on **clarity, low friction, and offline-friendly workflows**, with automatic aggregation and simple financial insights.
 
 ---
@@ -36,7 +36,6 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
   - [Backend](#Backend)
 - [Roadmap](#Future-Modules)
 - [Contribution](#Contribution)
-- [About](#About-Sloths-Fin)
 - [License](#License)
 
 ---
@@ -158,7 +157,7 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
 ## Clone the repository
 
 ```bash
-git clone https://github.com/slothsintel/autotrac.git
+git clone https://github.com/sloxen/autotrac.git
 cd autotrac
 ```
 
@@ -298,15 +297,15 @@ Render automatically redeploys the backend service.
 
 # Contribution
 
-Maintained by [**Sloths Intel GitHub**](https://github.com/slothsintel), and [**Daddy Sloth Github**](https://github.com/drxilu).
+Maintained by [**Sloxen™ GitHub**](https://github.com/sloxen), and [**Daddy Sloth Github**](https://github.com/drxilu).
 
 ---
 
 # License
 
-© 2026 **Sloths Intel**.
+© 2026 **Sloxen™**.
 
-A trading name of **Sloths Intel Ltd**
+A trading name of **Sloxen Ltd**
 Registered in England and Wales (Company No. 16907507).
 
 MIT License.
@@ -315,9 +314,9 @@ MIT License.
 
 ## Links
 
-* [AutoTrac Website](https://autotrac.slothsintel.com)
-* [AutoTrac GitHub](https://github.com/slothsintel/autotrac)
-* [Company homepage](https://slothsintel.com)
+* [AutoTrac Website](https://autotrac.sloxen.com)
+* [AutoTrac GitHub](https://github.com/sloxen/autotrac)
+* [Company homepage](https://sloxen.com)
 
 <p align="right">
   <a href="#top" style="text-decoration:none;">

@@ -29,10 +29,10 @@ export default function More() {
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   const links = [
-    { label: "Privacy", href: "https://slothsintel.com/privacy.html" },
-    { label: "Terms", href: "https://slothsintel.com/terms.html" },
-    { label: "Products Hub", href: "https://slothsintel.com/products.html" },
-    { label: "GitHub", href: "https://github.com/slothsintel" },
+    { label: "Privacy", href: "https://sloxen.com/privacy.html" },
+    { label: "Terms", href: "https://sloxen.com/terms.html" },
+    { label: "Products Hub", href: "https://sloxen.com/products.html" },
+    { label: "GitHub", href: "https://github.com/sloxen" },
   ];
 
   const loadMe = async () => {

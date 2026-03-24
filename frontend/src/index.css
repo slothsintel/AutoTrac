@@ -7,9 +7,9 @@
 main { padding-bottom: calc(4rem + var(--safe-bottom)); }
 
 /* =========================================================
-   SlothsIntel ↔ AutoTrac light theme bridge
+   Sloxen ↔ AutoTrac light theme bridge
    - Set your "brand" colors once here.
-   - If you already have exact hex values in slothsintel.com style.css,
+   - If you already have exact hex values in sloxen.com style.css,
      paste them in place of these.
    ========================================================= */
 :root {
@@ -21,7 +21,7 @@ main { padding-bottom: calc(4rem + var(--safe-bottom)); }
   --si-muted: rgba(15, 31, 23, 0.68);
   --si-border: rgba(15, 31, 23, 0.12);
 
-  /* Accent (tune these to match slothsintel.com precisely) */
+  /* Accent (tune these to match sloxen.com precisely) */
   --si-accent: #1f6f5b;      /* primary brand accent */
   --si-accent-2: #2a8a72;    /* hover / secondary accent */
   --si-accent-soft: rgba(31, 111, 91, 0.12);
