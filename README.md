@@ -290,7 +290,7 @@ Render automatically redeploys the backend service.
 # Roadmap
 
 - biometric login
-- iOS / Android store packaging
+- Google / Apple store packaging
 - Team / shared projects
 
 ---
