@@ -42,8 +42,6 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
 
 # Features
 
-<img src="autotrac_screenshot.jpg" align="center" width="1000" />
-
 ## Time Tracking
 
 * Start / stop time entries per project
@@ -64,6 +62,8 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
 * Stacked daily income chart (last 30 days)
 * Swipe left/right to explore history
 * Charts default to **most recent data**
+
+<img src="autotrac_screenshot.jpg" align="center" width="1000" />
 
 ## Authentication
 
