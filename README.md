@@ -63,7 +63,12 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
 * Swipe left/right to explore history
 * Charts default to **most recent data**
 
-<img src="autotrac_screenshot.jpg" align="center" width="1000" />
+<div style="display:flex; gap:12px; overflow-x:auto;">
+  <img src="autotrac_home.png" style="height:200px;" />
+  <img src="autotrac_screenshot_2.jpg" style="height:200px;" />
+  <img src="autotrac_screenshot_3.jpg" style="height:200px;" />
+  <img src="autotrac_screenshot_4.jpg" style="height:200px;" />
+</div>
 
 ## Authentication
 
