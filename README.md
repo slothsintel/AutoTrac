@@ -42,6 +42,8 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
 
 # Features
 
+<img src="autotrac_screenshot.jpg" align="center" width="1000" />
+
 ## Time Tracking
 
 * Start / stop time entries per project
