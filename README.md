@@ -64,10 +64,10 @@ It focuses on **clarity, low friction, and offline-friendly workflows**, with au
 * Charts default to **most recent data**
 
 <div style="display:flex; overflow-x:auto; scroll-snap-type:x mandatory;">
-  <img src="frontend/assets/autotrac_screenshot_1.jpg"  style="width:50%;" />
-  <img src="frontend/assets/autotrac_screenshot_2.jpg" style="width:50%;" />
-  <img src="frontend/assets/autotrac_screenshot_3.jpg" style="width:50%;" />
-  <img src="frontend/assets/autotrac_screenshot_4.jpg" style="width:50%;" />
+  <img src="frontend/assets/autotrac_screenshot_1.jpg"  style="width:45%;" />
+  <img src="frontend/assets/autotrac_screenshot_2.jpg" style="width:45%;" />
+  <img src="frontend/assets/autotrac_screenshot_3.jpg" style="width:45%;" />
+  <img src="frontend/assets/autotrac_screenshot_4.jpg" style="width:45%;" />
 </div>
 
 ## Authentication
