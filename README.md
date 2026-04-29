@@ -13,7 +13,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Andriod%20%7C%20iOS%20%7C%20WIN%20%7C%20Linux%20%7C%20WSL%20%7C%20macOS-lightgrey)]()
 
 **AutoTrac** is developed and maintained by **Sloxen™**, is a lightweight, mobile-first **time tracking and income tracking PWA** designed for freelancers, consultants, and small teams.
-It focuses on **clarity, low friction, and offline-friendly workflows**, with automatic aggregation and simple financial insights.
+As part of **Hybrid Intelligence System**, it focuses on **clarity, low friction, and offline-friendly workflows**, with automatic aggregation and simple financial insights.
 
 ---
 
