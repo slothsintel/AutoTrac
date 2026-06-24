@@ -3,16 +3,16 @@
 
 <img src="autotrac.svg" align="right" width="180" />
 
-[![Static Badge](https://img.shields.io/badge/License-Sloxen™-darkgreen)]()
+[![Static Badge](https://img.shields.io/badge/License-Sloxen®-darkgreen)]()
 [![Static Badge](https://img.shields.io/badge/Build-Passing-%23a9f378)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)]()
 [![Status](https://img.shields.io/badge/Project-Active-brightgreen.svg)]()
 
-![Org](https://img.shields.io/badge/Research-Sloxen™-black)
+![Org](https://img.shields.io/badge/Research-Sloxen®-black)
 [![Platform](https://img.shields.io/badge/Platform-Andriod%20%7C%20iOS%20%7C%20WIN%20%7C%20Linux%20%7C%20WSL%20%7C%20macOS-lightgrey)]()
 
-**AutoTrac** is developed and maintained by **Sloxen™**, is a lightweight, mobile-first **time tracking and income tracking PWA** designed for freelancers, consultants, and small teams.
+**AutoTrac** is developed and maintained by **Sloxen®**, is a lightweight, mobile-first **time tracking and income tracking PWA** designed for freelancers, consultants, and small teams.
 As part of **Hybrid Intelligence System**, it focuses on **clarity, low friction, and offline-friendly workflows**, with automatic aggregation and simple financial insights.
 
 ---
@@ -304,13 +304,13 @@ Render automatically redeploys the backend service.
 
 # Contribution
 
-Maintained by [**Sloxen™ GitHub**](https://github.com/sloxen), and [**Daddy Sloth Github**](https://github.com/daddysloth).
+Maintained by [**Sloxen® GitHub**](https://github.com/sloxen), and [**Daddy Sloth Github**](https://github.com/daddysloth).
 
 ---
 
 # License
 
-© 2026 **Sloxen™**.
+© 2026 **Sloxen®**.
 
 A trading name of **Sloxen Ltd**
 Registered in England and Wales (Company No. 16907507).
